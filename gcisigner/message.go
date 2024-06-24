@@ -1,7 +1,7 @@
 package gcisigner
 
 import (
-	"github.com/thomasdesr/aws-role-mtls/gcisigner/internal/awsapi"
+	"github.com/thomasdesr/aws-role-mtls/gcisigner/awsapi"
 )
 
 type SignedMessage struct {
@@ -23,5 +23,5 @@ type VerifiedMessage struct {
 	CallerIdentity awsapi.GetCallerIdentityResult
 
 	// The original message that was verified
-	Raw SignedMessage
+	Raw *SignedMessage
 }

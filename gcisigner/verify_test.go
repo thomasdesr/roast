@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/thomasdesr/aws-role-mtls/gcisigner"
-	"github.com/thomasdesr/aws-role-mtls/gcisigner/internal/awsapi"
+	"github.com/thomasdesr/aws-role-mtls/gcisigner/awsapi"
 	"github.com/thomasdesr/aws-role-mtls/gcisigner/internal/masker"
 )
 
@@ -29,7 +29,6 @@ func TestVerifyAWSRequestBad(t *testing.T) {
 			if resp != nil {
 				t.Fatalf("Expected nil verify response, got %v", resp)
 			}
-
 		})
 	}
 }

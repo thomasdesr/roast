@@ -13,11 +13,18 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
-	"github.com/thomasdesr/aws-role-mtls/gcisigner/internal/awsapi"
-	"github.com/thomasdesr/aws-role-mtls/gcisigner/internal/errorutil"
+	"github.com/thomasdesr/aws-role-mtls/gcisigner/awsapi"
 	"github.com/thomasdesr/aws-role-mtls/gcisigner/internal/masker"
+	"github.com/thomasdesr/aws-role-mtls/internal/errorutil"
 )
 
+type Signer interface {
+	Sign(ctx context.Context, payload []byte) (*SignedMessage, error)
+}
+
+// SigV4Signer is a `Signer` that uses the provided `aws.CredentialsProvider` to
+// construct a GetCallerIdentity requests using SigV4. `Sign` returns a message
+// that can be send to a `Verifier` for verification.
 type SigV4Signer struct {
 	region awsapi.Region
 

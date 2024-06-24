@@ -10,11 +10,18 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/thomasdesr/aws-role-mtls/gcisigner/internal/awsapi"
-	"github.com/thomasdesr/aws-role-mtls/gcisigner/internal/errorutil"
+	"github.com/thomasdesr/aws-role-mtls/gcisigner/awsapi"
 	"github.com/thomasdesr/aws-role-mtls/gcisigner/internal/masker"
+	"github.com/thomasdesr/aws-role-mtls/internal/errorutil"
 )
 
+type Verifier interface {
+	Verify(ctx context.Context, msg *UnverifiedMessage) (*VerifiedMessage, error)
+}
+
+// SigV4Verifier is a Verifier that uses SigV4 signed GetCallerIdentity requests
+// (usually constructed by a `Signer`) to verify the contents of the message and
+// confirms that the source meets the requirements of the `IsValidSource`.
 type SigV4Verifier struct {
 	raw unconstrainedSigV4Verifier
 
@@ -60,6 +67,8 @@ func (v *SigV4Verifier) Verify(ctx context.Context, msg *UnverifiedMessage) (*Ve
 	return &VerifiedMessage{
 		Payload:        sigVerifiedPayload,
 		CallerIdentity: *gcir,
+
+		Raw: (*SignedMessage)(msg),
 	}, nil
 }
 

@@ -10,7 +10,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/thomasdesr/aws-role-mtls/gcisigner"
-	"github.com/thomasdesr/aws-role-mtls/gcisigner/internal/awsapi"
+	"github.com/thomasdesr/aws-role-mtls/gcisigner/awsapi"
 )
 
 func TestSignVerifyRoundtrip(t *testing.T) {
