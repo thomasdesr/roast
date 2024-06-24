@@ -1,7 +1,7 @@
 package gcisigner
 
 import (
-	"github.com/thomasdesr/aws-role-mtls/gcisigner/awsapi"
+	"github.com/thomasdesr/roast/gcisigner/awsapi"
 )
 
 type SignedMessage struct {

@@ -4,7 +4,7 @@ import (
 	"encoding/xml"
 	"testing"
 
-	"github.com/thomasdesr/aws-role-mtls/gcisigner/awsapi"
+	"github.com/thomasdesr/roast/gcisigner/awsapi"
 )
 
 const realResp = `

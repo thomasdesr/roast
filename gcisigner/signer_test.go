@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/thomasdesr/aws-role-mtls/gcisigner"
-	"github.com/thomasdesr/aws-role-mtls/gcisigner/awsapi"
+	"github.com/thomasdesr/roast/gcisigner"
+	"github.com/thomasdesr/roast/gcisigner/awsapi"
 )
 
 func TestSignVerifyRoundtrip(t *testing.T) {

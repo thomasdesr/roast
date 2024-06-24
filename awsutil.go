@@ -1,4 +1,4 @@
-package awsrolemtls
+package roast
 
 import (
 	"fmt"
@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
-	"github.com/thomasdesr/aws-role-mtls/gcisigner"
-	"github.com/thomasdesr/aws-role-mtls/gcisigner/awsapi"
-	"github.com/thomasdesr/aws-role-mtls/internal/errorutil"
+	"github.com/thomasdesr/roast/gcisigner"
+	"github.com/thomasdesr/roast/gcisigner/awsapi"
+	"github.com/thomasdesr/roast/internal/errorutil"
 )
 
 func assumedRoleInRoles(allowedPeerRoles []arn.ARN) gcisigner.SourceVerifier {

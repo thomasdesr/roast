@@ -13,9 +13,9 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
-	"github.com/thomasdesr/aws-role-mtls/gcisigner/awsapi"
-	"github.com/thomasdesr/aws-role-mtls/gcisigner/internal/masker"
-	"github.com/thomasdesr/aws-role-mtls/internal/errorutil"
+	"github.com/thomasdesr/roast/gcisigner/awsapi"
+	"github.com/thomasdesr/roast/gcisigner/internal/masker"
+	"github.com/thomasdesr/roast/internal/errorutil"
 )
 
 type Signer interface {

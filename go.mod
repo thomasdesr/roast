@@ -1,4 +1,4 @@
-module github.com/thomasdesr/aws-role-mtls
+module github.com/thomasdesr/roast
 
 go 1.22.3
 

@@ -7,9 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/thomasdesr/aws-role-mtls/gcisigner"
-	"github.com/thomasdesr/aws-role-mtls/gcisigner/awsapi"
-	"github.com/thomasdesr/aws-role-mtls/gcisigner/internal/masker"
+	"github.com/thomasdesr/roast/gcisigner"
+	"github.com/thomasdesr/roast/gcisigner/awsapi"
+	"github.com/thomasdesr/roast/gcisigner/internal/masker"
 )
 
 func TestVerifyAWSRequestBad(t *testing.T) {

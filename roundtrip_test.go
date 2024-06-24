@@ -1,4 +1,4 @@
-package awsrolemtls_test
+package roast_test
 
 import (
 	"bytes"
@@ -14,11 +14,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
-	awsrolemtls "github.com/thomasdesr/aws-role-mtls"
-	"github.com/thomasdesr/aws-role-mtls/gcisigner"
-	"github.com/thomasdesr/aws-role-mtls/gcisigner/awsapi"
-	"github.com/thomasdesr/aws-role-mtls/internal/errorutil"
-	"github.com/thomasdesr/aws-role-mtls/internal/testutils"
+	roast "github.com/thomasdesr/roast"
+	"github.com/thomasdesr/roast/gcisigner"
+	"github.com/thomasdesr/roast/gcisigner/awsapi"
+	"github.com/thomasdesr/roast/internal/errorutil"
+	"github.com/thomasdesr/roast/internal/testutils"
 	"golang.org/x/crypto/blake2b"
 	"golang.org/x/sync/errgroup"
 )
@@ -53,7 +53,7 @@ func TestRoundTrip(t *testing.T) {
 		},
 	}
 
-	tlsListener, err := awsrolemtls.NewListener(listener, []arn.ARN{clientRole})
+	tlsListener, err := roast.NewListener(listener, []arn.ARN{clientRole})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,7 +67,7 @@ func TestRoundTrip(t *testing.T) {
 		},
 	}
 
-	tlsDialer, err := awsrolemtls.NewDialer([]arn.ARN{serverRole})
+	tlsDialer, err := roast.NewDialer([]arn.ARN{serverRole})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,13 +98,13 @@ func TestRoundTripWithRealCredentials(t *testing.T) {
 	listener, dialCtx := testutils.ListenerDialer(t)
 
 	// Construct our tls listener and dialer
-	tlsDialer, err := awsrolemtls.NewDialer([]arn.ARN{localARN})
+	tlsDialer, err := roast.NewDialer([]arn.ARN{localARN})
 	if err != nil {
 		t.Fatal(err)
 	}
 	tlsDialer.Dialer = dialCtx
 
-	tlsListener, err := awsrolemtls.NewListener(listener, []arn.ARN{localARN})
+	tlsListener, err := roast.NewListener(listener, []arn.ARN{localARN})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -115,7 +115,7 @@ func TestRoundTripWithRealCredentials(t *testing.T) {
 	runRoundTrip(ctxWithTimeout, t, tlsListener, tlsDialer)
 }
 
-func runRoundTrip(ctx context.Context, t *testing.T, listener *awsrolemtls.Listener, dialer *awsrolemtls.Dialer) {
+func runRoundTrip(ctx context.Context, t *testing.T, listener *roast.Listener, dialer *roast.Dialer) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*1)
 	defer cancel()
 	g, ctx := errgroup.WithContext(ctx)

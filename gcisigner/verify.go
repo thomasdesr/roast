@@ -9,9 +9,9 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/thomasdesr/aws-role-mtls/gcisigner/awsapi"
-	"github.com/thomasdesr/aws-role-mtls/gcisigner/internal/masker"
-	"github.com/thomasdesr/aws-role-mtls/internal/errorutil"
+	"github.com/thomasdesr/roast/gcisigner/awsapi"
+	"github.com/thomasdesr/roast/gcisigner/internal/masker"
+	"github.com/thomasdesr/roast/internal/errorutil"
 )
 
 type Verifier interface {

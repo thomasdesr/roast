@@ -1,4 +1,4 @@
-package awsrolemtls
+package roast
 
 import (
 	"crypto/ecdsa"
@@ -12,7 +12,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/thomasdesr/aws-role-mtls/internal/errorutil"
+	"github.com/thomasdesr/roast/internal/errorutil"
 )
 
 type caBundle struct {
