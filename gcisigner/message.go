@@ -6,12 +6,12 @@ import (
 
 type SignedMessage struct {
 	Body []byte
+	Mask []byte
 
 	Region            awsapi.Region
-	XAmzCredential    string
-	XAmzDate          string
+	AmzAuthorization  string
 	XAmzSecurityToken string
-	XAmzSignature     string
+	XAmzDate          string
 }
 
 // Same as a SignedMessage, but since we're on the read side, we want to make it

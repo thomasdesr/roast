@@ -3,11 +3,11 @@ package gcisigner
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -73,9 +73,10 @@ func (s *SigV4Signer) Sign(ctx context.Context, payload []byte) (*SignedMessage,
 	hashedPayload := sha256.Sum256(payload)
 
 	// AWS Sigv4 Sign the request
-	presignedURL, _, err := s.sigV4Signer.PresignHTTP(ctx,
+	signedReq := req.Clone(ctx)
+	err = s.sigV4Signer.SignHTTP(ctx,
 		creds,
-		req,
+		signedReq,
 		hex.EncodeToString(hashedPayload[:]),
 		"sts",
 		s.region.String(),
@@ -85,27 +86,16 @@ func (s *SigV4Signer) Sign(ctx context.Context, payload []byte) (*SignedMessage,
 		return nil, errorutil.Wrap(err, "sigv4 signing")
 	}
 
-	// Start to extract the fields we need to hand to the client
-	parsedPresignedURI, err := url.Parse(presignedURL)
-	if err != nil {
-		return nil, errorutil.Wrap(err, "parsing url")
-	}
-
-	// Extract the signature from the presigned URL so we can use it for masking
-	// the provided payload.
-	sig := parsedPresignedURI.Query().Get("X-Amz-Signature")
-	sigB, err := hex.DecodeString(sig)
-	if err != nil {
-		return nil, errorutil.Wrap(err, "decoding signature")
-	}
+	mask := make([]byte, 32)
+	rand.Read(mask)
 
 	// Construct our "SignedMessage" we can safely hand to clients
 	return &SignedMessage{
 		Region:            s.region,
-		Body:              masker.Mask(sigB, payload),
-		XAmzCredential:    parsedPresignedURI.Query().Get("X-Amz-Credential"),
-		XAmzDate:          parsedPresignedURI.Query().Get("X-Amz-Date"),
-		XAmzSecurityToken: parsedPresignedURI.Query().Get("X-Amz-Security-Token"),
-		XAmzSignature:     sig,
+		Body:              masker.Mask(mask, payload),
+		Mask:              mask,
+		AmzAuthorization:  signedReq.Header.Get("Authorization"),
+		XAmzDate:          signedReq.Header.Get("X-Amz-Date"),
+		XAmzSecurityToken: signedReq.Header.Get("X-Amz-Security-Token"),
 	}, nil
 }

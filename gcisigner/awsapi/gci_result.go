@@ -2,6 +2,8 @@ package awsapi
 
 import "encoding/xml"
 
+// TODO: Switch to using JSON for this struct, since that's apaprently possible!
+
 // GetCallerIdentityResponse is the raw, outer XML response from the GetCallerIdentity API call.
 type GetCallerIdentityResponse struct {
 	XMLName                 xml.Name                `xml:"https://sts.amazonaws.com/doc/2011-06-15/ GetCallerIdentityResponse"`

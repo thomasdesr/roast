@@ -3,7 +3,6 @@ package gcisigner_test
 import (
 	"bytes"
 	"context"
-	"encoding/hex"
 	"fmt"
 	"net/http/httptest"
 	"testing"
@@ -18,7 +17,7 @@ func TestVerifyAWSRequestBad(t *testing.T) {
 
 	for i, tc := range []gcisigner.UnverifiedMessage{
 		{},
-		{XAmzCredential: "notHex"},
+		{AmzAuthorization: ""},
 	} {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			resp, err := v.Verify(context.Background(), &tc)
@@ -54,15 +53,15 @@ func TestVerify(t *testing.T) {
 	)
 
 	payload := []byte("hello world")
-	sig := bytes.Repeat([]byte("siga"), 8)
+	mask := bytes.Repeat([]byte("siga"), 8)
 
 	resp, err := v.Verify(context.Background(), &gcisigner.UnverifiedMessage{
 		Region:            "us-east-1",
-		Body:              masker.Mask(sig, payload),
-		XAmzCredential:    "AKIDEXAMPLE/20150830/us-east-1/sts/aws4_request",
-		XAmzDate:          "date",
+		Body:              masker.Mask(mask, payload),
+		Mask:              mask,
+		AmzAuthorization:  "AWS4-HMAC-SHA256 Credential=AKIAI44QH8DHBEXAMPLE/20160126/us-east-1/sts/aws4_request,SignedHeaders=host;user-agent;x-amz-date,Signature=sig",
 		XAmzSecurityToken: "token",
-		XAmzSignature:     hex.EncodeToString(sig),
+		XAmzDate:          "date",
 	})
 	if err != nil {
 		t.Fatal(err)

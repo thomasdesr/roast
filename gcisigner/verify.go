@@ -3,7 +3,6 @@ package gcisigner
 import (
 	"bytes"
 	"context"
-	"encoding/hex"
 	"encoding/xml"
 	"fmt"
 	"net/http"
@@ -108,39 +107,11 @@ func canonicalRequestFrom(ctx context.Context, msg *UnverifiedMessage) (*http.Re
 		return nil, nil, fmt.Errorf("invalid region: %q", msg.Region)
 	}
 
-	// Start to construct a URL for our Call to STS for verification
-	var stsPresignedURL *url.URL
-	{
-		uri, _ := url.Parse(strings.Replace(awsapi.RegionalGetCallerIdentityURLTemplate, "{region}", msg.Region.String(), 1))
+	// Construct sts:GetCallerIdentity URL for verification
+	uri, _ := url.Parse(strings.Replace(awsapi.RegionalGetCallerIdentityURLTemplate, "{region}", msg.Region.String(), 1))
 
-		q := uri.Query()
-		q.Add("X-Amz-Algorithm", "AWS4-HMAC-SHA256")
-		q.Add("X-Amz-SignedHeaders", "content-length;host")
-		q.Add("X-Amz-Credential", msg.XAmzCredential)
-		q.Add("X-Amz-Date", msg.XAmzDate)
-		q.Add("X-Amz-Security-Token", msg.XAmzSecurityToken)
-		q.Add("X-Amz-Signature", msg.XAmzSignature)
-
-		// Verify our request has given us vaguely correct values
-		for k, v := range q {
-			if v[0] == "" {
-				return nil, nil, fmt.Errorf("invalid message field: %q: %v", k, v[1])
-			}
-		}
-
-		uri.RawQuery = q.Encode()
-
-		// Store our fully reconstructed URI
-		stsPresignedURL = uri
-	}
-
-	// Decode the signature from the message so we can unmask the message
-	sigB, err := hex.DecodeString(msg.XAmzSignature)
-	if err != nil {
-		return nil, nil, errorutil.Wrap(err, "failed to decode signature")
-	}
-
-	unmaskedPayload, err := masker.Unmask(sigB, msg.Body)
+	// Unmask our data
+	unmaskedPayload, err := masker.Unmask(msg.Mask, msg.Body)
 	if err != nil {
 		return nil, nil, errorutil.Wrap(err, "failed to unmask")
 	}
@@ -148,11 +119,24 @@ func canonicalRequestFrom(ctx context.Context, msg *UnverifiedMessage) (*http.Re
 	req, err := http.NewRequestWithContext(
 		ctx,
 		"POST",
-		stsPresignedURL.String(),
+		uri.String(),
 		bytes.NewBuffer(unmaskedPayload),
 	)
 	if err != nil {
 		return nil, nil, errorutil.Wrap(err, "failed to create request")
+	}
+
+	{
+		req.Header.Add("Authorization", msg.AmzAuthorization)
+		req.Header.Add("X-Amz-Date", msg.XAmzDate)
+		req.Header.Add("X-Amz-Security-Token", msg.XAmzSecurityToken)
+
+		// Verify our request has given us vaguely correct values
+		for k, v := range req.Header {
+			if v[0] == "" {
+				return nil, nil, fmt.Errorf("invalid message field: %q: %v", k, v[0])
+			}
+		}
 	}
 
 	return req, unmaskedPayload, nil

@@ -205,8 +205,8 @@ func (f *fakeGCIS) Sign(ctx context.Context, payload []byte) (*gcisigner.SignedM
 	kmac.Write(payload)
 
 	return &gcisigner.SignedMessage{
-		Body:          payload,
-		XAmzSignature: hex.EncodeToString(kmac.Sum(nil)),
+		Body:             payload,
+		AmzAuthorization: hex.EncodeToString(kmac.Sum(nil)),
 	}, nil
 }
 
@@ -216,8 +216,8 @@ func (f *fakeGCIS) Verify(ctx context.Context, msg *gcisigner.UnverifiedMessage)
 
 	kmacSig := hex.EncodeToString(kmac.Sum(nil))
 
-	if kmacSig != msg.XAmzSignature {
-		return nil, fmt.Errorf("invalid sig: %q != %q", kmacSig, msg.XAmzSignature)
+	if kmacSig != msg.AmzAuthorization {
+		return nil, fmt.Errorf("invalid sig: %q != %q", kmacSig, msg.AmzAuthorization)
 	}
 
 	return &gcisigner.VerifiedMessage{
