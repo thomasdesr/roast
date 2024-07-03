@@ -49,12 +49,12 @@ func (l *Listener) Accept() (net.Conn, error) {
 }
 
 func (l *Listener) UpgradeServerConn(ctx context.Context, c net.Conn) (*tls.Conn, error) {
-	tlsConf, err := serverHandshake(ctx, c, l.Signer, l.Verifier)
+	tlsConf, peerMetadata, err := serverHandshake(ctx, c, l.Signer, l.Verifier)
 	if err != nil {
 		return nil, errorutil.Wrap(err, "failed to complete a handshake")
 	}
 
-	tlsConn := tls.Server(c, tlsConf)
+	tlsConn := tls.Server(&Conn{Conn: c, Peer: peerMetadata}, tlsConf)
 
 	if err := tlsConn.HandshakeContext(ctx); err != nil {
 		return nil, errorutil.Wrap(err, "failed to complete a handshake")

@@ -49,12 +49,12 @@ func (d *Dialer) DialContext(ctx context.Context, network, address string) (net.
 }
 
 func (d *Dialer) UpgradeClientConn(ctx context.Context, c net.Conn) (*tls.Conn, error) {
-	tlsConf, err := clientHandshake(ctx, c, d.Signer, d.Verifier)
+	tlsConf, peerMetadata, err := clientHandshake(ctx, c, d.Signer, d.Verifier)
 	if err != nil {
 		return nil, errorutil.Wrap(err, "failed to complete a handshake")
 	}
 
-	tlsConn := tls.Client(c, tlsConf)
+	tlsConn := tls.Client(&Conn{Conn: c, Peer: peerMetadata}, tlsConf)
 
 	if err := tlsConn.HandshakeContext(ctx); err != nil {
 		return nil, errorutil.Wrap(err, "failed to complete a handshake")

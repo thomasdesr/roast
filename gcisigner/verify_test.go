@@ -53,7 +53,7 @@ func TestVerify(t *testing.T) {
 	)
 
 	payload := []byte("hello world")
-	mask := bytes.Repeat([]byte("siga"), 8)
+	mask := bytes.Repeat([]byte("mask"), 8)
 
 	resp, err := v.Verify(context.Background(), &gcisigner.UnverifiedMessage{
 		Region:            "us-east-1",
@@ -97,7 +97,7 @@ func TestVerifyBadSource(t *testing.T) {
 	)
 
 	payload := []byte("hello world")
-	mask := bytes.Repeat([]byte("siga"), 8)
+	mask := bytes.Repeat([]byte("mask"), 8)
 
 	resp, err := v.Verify(context.Background(), &gcisigner.UnverifiedMessage{
 		Region:            "us-east-1",

@@ -18,8 +18,6 @@ contact, exchange certs, etc)
 
 # WIP:
 
-- [ ] Add `Conn` to allow higher levels to figure out who they're talking to (&
-      probably some context stuff)
 - [ ] Add HTTP examples
 - [ ] Also use the security-token/ec2-instance creds to attach more useful
       metadata to the cert itself.
