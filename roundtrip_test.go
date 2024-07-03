@@ -3,8 +3,7 @@ package roast_test
 import (
 	"bytes"
 	"context"
-	"crypto/rand"
-	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -15,69 +14,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	roast "github.com/thomasdesr/roast"
-	"github.com/thomasdesr/roast/gcisigner"
-	"github.com/thomasdesr/roast/gcisigner/awsapi"
 	"github.com/thomasdesr/roast/internal/errorutil"
 	"github.com/thomasdesr/roast/internal/testutils"
-	"golang.org/x/crypto/blake2b"
 	"golang.org/x/sync/errgroup"
 )
-
-func TestRoundTrip(t *testing.T) {
-	clientRole := arn.ARN{
-		Partition: "aws",
-		Service:   "sts",
-		Region:    "",
-		AccountID: "1234567890",
-		Resource:  "assumed-role/ClientRole",
-	}
-
-	serverRole := arn.ARN{
-		Partition: "aws",
-		Service:   "sts",
-		Region:    "",
-		AccountID: "1234567890",
-		Resource:  "assumed-role/ServerRole",
-	}
-
-	gcisKey := make([]byte, 32)
-	rand.Read(gcisKey)
-
-	listener, dialCtx := testutils.ListenerDialer(t)
-
-	// Create our server
-	serverGCIS := &fakeGCIS{
-		key: gcisKey,
-		callerIdentity: awsapi.GetCallerIdentityResult{
-			Arn: clientRole.String(),
-		},
-	}
-
-	tlsListener, err := roast.NewListener(listener, []arn.ARN{clientRole})
-	if err != nil {
-		t.Fatal(err)
-	}
-	tlsListener.Signer, tlsListener.Verifier = serverGCIS, serverGCIS
-
-	// Create our client
-	clientGCIS := &fakeGCIS{
-		key: gcisKey,
-		callerIdentity: awsapi.GetCallerIdentityResult{
-			Arn: serverRole.String(),
-		},
-	}
-
-	tlsDialer, err := roast.NewDialer([]arn.ARN{serverRole})
-	if err != nil {
-		t.Fatal(err)
-	}
-	tlsDialer.Signer, tlsDialer.Verifier = clientGCIS, clientGCIS
-	tlsDialer.Dialer = dialCtx
-
-	// And send the hello world through!
-	runRoundTrip(context.Background(), t, tlsListener, tlsDialer)
-	t.Log("success")
-}
 
 func TestRoundTripWithRealCredentials(t *testing.T) {
 	ctx := context.Background()
@@ -112,10 +52,20 @@ func TestRoundTripWithRealCredentials(t *testing.T) {
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
-	runRoundTrip(ctxWithTimeout, t, tlsListener, tlsDialer)
+	// And send the hello world through!
+	runRoundTrip(ctxWithTimeout, t, tlsListener, tlsDialer.DialContext)
+	t.Log("success")
 }
 
-func runRoundTrip(ctx context.Context, t *testing.T, listener *roast.Listener, dialer *roast.Dialer) {
+func TestRoundTrip(t *testing.T) {
+	l, d := localValidListenerAndDialer(t)
+
+	// And send the hello world through!
+	runRoundTrip(context.Background(), t, l, d.DialContext)
+	t.Log("success")
+}
+
+func runRoundTrip(ctx context.Context, t *testing.T, listener net.Listener, dialCtx func(context.Context, string, string) (net.Conn, error)) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*1)
 	defer cancel()
 	g, ctx := errgroup.WithContext(ctx)
@@ -136,93 +86,44 @@ func runRoundTrip(ctx context.Context, t *testing.T, listener *roast.Listener, d
 	})
 
 	g.Go(func() error { // Client side
-		c, err := dialer.DialContext(ctx, listener.Addr().Network(), listener.Addr().String())
+		c, err := dialCtx(ctx, listener.Addr().Network(), listener.Addr().String())
 		if err != nil {
 			return errorutil.Wrap(err, "dial failed")
 		}
 		defer c.Close()
 
-		go func() {
-			<-ctx.Done()
-			c.Close()
-		}()
+		messageToRoundTrip := []byte("hello world")
 
-		if err := testConnRoundTrip(t, c); err != nil {
-			errorutil.Wrap(err, "client: round trip failed")
-		}
+		// Write some data into the conn so it'll get echo'd back to us
+		g.Go(func() error {
+			if _, err := c.Write(messageToRoundTrip); err != nil {
+				return errorutil.Wrap(err, "write failed")
+			}
+			return nil
+		})
+
+		// Ensure the data is comes back
+		g.Go(func() error {
+			hello := make([]byte, 1024)
+			n, err := c.Read(hello)
+			if err != nil {
+				return errorutil.Wrap(err, "read failed")
+			}
+
+			hello = hello[:n]
+			if !bytes.Equal(hello, messageToRoundTrip) {
+				return fmt.Errorf("read: unexpected message: %q", hello)
+			}
+
+			t.Log("read success:", string(hello))
+
+			return nil
+		})
 
 		return nil
 	})
 
-	if err := g.Wait(); err != nil {
+	if err := g.Wait(); err != nil && !errors.Is(err, net.ErrClosed) {
 		t.Fatal(err)
 	}
-}
-
-func testConnRoundTrip(t *testing.T, conn net.Conn) error {
-	var g errgroup.Group
-
-	messageToRoundTrip := []byte("hello world")
-
-	// Write some data into the pipe
-	g.Go(func() error {
-		if _, err := conn.Write(messageToRoundTrip); err != nil {
-			return errorutil.Wrap(err, "write failed")
-		}
-		return nil
-	})
-
-	// Ensure the data is comes back out the other end
-	g.Go(func() error {
-		hello := make([]byte, 1024)
-		n, err := conn.Read(hello)
-		if err != nil {
-			return errorutil.Wrap(err, "read failed")
-		}
-
-		hello = hello[:n]
-		if !bytes.Equal(hello, messageToRoundTrip) {
-			return fmt.Errorf("read: unexpected message: %q", hello)
-		}
-
-		t.Log("read success:", string(hello))
-
-		return nil
-	})
-
-	return g.Wait()
-}
-
-type fakeGCIS struct {
-	key            []byte
-	callerIdentity awsapi.GetCallerIdentityResult
-}
-
-func (f *fakeGCIS) Sign(ctx context.Context, payload []byte) (*gcisigner.SignedMessage, error) {
-	// We're doing this keyed MAC, just to ensure we don't cross-wire GCIS
-	// instances
-	kmac, _ := blake2b.New256(f.key)
-	kmac.Write(payload)
-
-	return &gcisigner.SignedMessage{
-		Body:             payload,
-		AmzAuthorization: hex.EncodeToString(kmac.Sum(nil)),
-	}, nil
-}
-
-func (f *fakeGCIS) Verify(ctx context.Context, msg *gcisigner.UnverifiedMessage) (*gcisigner.VerifiedMessage, error) {
-	kmac, _ := blake2b.New256(f.key)
-	kmac.Write(msg.Body)
-
-	kmacSig := hex.EncodeToString(kmac.Sum(nil))
-
-	if kmacSig != msg.AmzAuthorization {
-		return nil, fmt.Errorf("invalid sig: %q != %q", kmacSig, msg.AmzAuthorization)
-	}
-
-	return &gcisigner.VerifiedMessage{
-		Payload:        msg.Body,
-		CallerIdentity: f.callerIdentity,
-		Raw:            (*gcisigner.SignedMessage)(msg),
-	}, nil
 }

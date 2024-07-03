@@ -24,7 +24,7 @@ func (c *Conn) checkAndBumpIdleTimeout() {
 	}
 }
 
-func (c Conn) Read(b []byte) (n int, err error) {
+func (c *Conn) Read(b []byte) (n int, err error) {
 	c.TB.Helper()
 
 	c.checkAndBumpIdleTimeout()
@@ -39,7 +39,7 @@ func (c Conn) Read(b []byte) (n int, err error) {
 	return
 }
 
-func (c Conn) Write(b []byte) (n int, err error) {
+func (c *Conn) Write(b []byte) (n int, err error) {
 	c.TB.Helper()
 
 	c.checkAndBumpIdleTimeout()
@@ -69,7 +69,7 @@ func (l Listener) Accept() (net.Conn, error) {
 		return c, nil
 	}
 
-	return Conn{"listener", l.TB, c, time.Second * 5}, nil
+	return &Conn{Name: "listener", TB: l.TB, Conn: c, idleTimeout: time.Second * 5}, nil
 }
 
 func ListenerDialer(t testing.TB) (net.Listener, func(context.Context, string, string) (net.Conn, error)) {
@@ -92,7 +92,7 @@ func ListenerDialer(t testing.TB) (net.Listener, func(context.Context, string, s
 			return c, nil
 		}
 
-		return Conn{"dialer", t, c, time.Second * 5}, nil
+		return &Conn{Name: "dialer", TB: t, Conn: c, idleTimeout: time.Second * 5}, nil
 	}
 
 	return Listener{t, l}, dialFunc

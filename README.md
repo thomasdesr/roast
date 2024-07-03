@@ -7,7 +7,7 @@ Wouldn't it be a lot simplier if all you had to do to get Mutually
 Authenticating TLS (mTLS) protected connections was listing with which IAM Roles
 a service expects as clients?
 
-Roast is designed to let you use your existing identity system to make it
+[Ro]le[A]WS[S]ignature[T]LS is designed to let you use your existing identity system to make it
 trivial to get mTLS connections setup based on your service's existing AWS
 credentials.
 
