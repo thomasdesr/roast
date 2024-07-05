@@ -37,10 +37,10 @@ func maybeGetRoastConn(conn net.Conn) *Conn {
 }
 
 func PeerMetadataFromContext(ctx context.Context) *PeerMetadata {
-	rConn, ok := ctx.Value(peerMetadataKeyInstance).(PeerMetadata)
+	rConn, ok := ctx.Value(peerMetadataKeyInstance).(*PeerMetadata)
 	if !ok {
 		return nil
 	}
 
-	return &rConn
+	return rConn
 }

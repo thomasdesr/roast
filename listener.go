@@ -45,6 +45,8 @@ func (l *Listener) Accept() (net.Conn, error) {
 		return nil, err
 	}
 
+	// TODO: Figure out how to better handle errors here, http.Server doesn't
+	// like it when Accept errors.
 	return l.UpgradeServerConn(context.Background(), conn)
 }
 
