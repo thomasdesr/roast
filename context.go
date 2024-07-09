@@ -4,7 +4,14 @@ import (
 	"context"
 	"crypto/tls"
 	"net"
+
+	"github.com/aws/aws-sdk-go-v2/aws/arn"
 )
+
+type PeerMetadata struct {
+	AccountID string
+	Role      arn.ARN
+}
 
 type (
 	peerMetadataContextKey struct{}

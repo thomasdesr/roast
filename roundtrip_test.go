@@ -103,22 +103,18 @@ func runRoundTrip(ctx context.Context, t *testing.T, listener net.Listener, dial
 		})
 
 		// Ensure the data is comes back
-		g.Go(func() error {
-			hello := make([]byte, 1024)
-			n, err := c.Read(hello)
-			if err != nil {
-				return errorutil.Wrap(err, "read failed")
-			}
+		hello := make([]byte, 1024)
+		n, err := c.Read(hello)
+		if err != nil {
+			return errorutil.Wrap(err, "read failed")
+		}
 
-			hello = hello[:n]
-			if !bytes.Equal(hello, messageToRoundTrip) {
-				return fmt.Errorf("read: unexpected message: %q", hello)
-			}
+		hello = hello[:n]
+		if !bytes.Equal(hello, messageToRoundTrip) {
+			return fmt.Errorf("read: unexpected message: %q", hello)
+		}
 
-			t.Log("read success:", string(hello))
-
-			return nil
-		})
+		t.Log("read success:", string(hello))
 
 		return nil
 	})

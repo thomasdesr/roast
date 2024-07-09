@@ -2,10 +2,12 @@ package roast_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	roast "github.com/thomasdesr/roast"
+	"golang.org/x/sync/errgroup"
 )
 
 func must[T any](v T, err error) T {
@@ -31,5 +33,59 @@ func TestContext(t *testing.T) {
 
 	if peer.Role.Resource != "assumed-role/ClientRole" {
 		t.Fatalf("unexpected role: %v", peer.Role)
+	}
+}
+
+func TestContextOnPair(t *testing.T) {
+	l, d := localValidListenerAndDialer(t)
+
+	g, ctx := errgroup.WithContext(context.Background())
+
+	g.Go(func() error {
+		conn, err := l.Accept()
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
+
+		// Ensure the handshake has completed
+		if err := conn.(*roast.Conn).HandshakeContext(ctx); err != nil {
+			t.Error(err)
+		}
+		t.Logf("server: Handshake done on %#v", conn)
+
+		ctx := roast.AttachPeerMetadataToContext(ctx, conn)
+		peer := roast.PeerMetadataFromContext(ctx)
+		if peer == nil {
+			return fmt.Errorf("expected peer metadata after Accept & Attach")
+		}
+
+		return nil
+	})
+
+	g.Go(func() error {
+		conn, err := d.DialContext(ctx, l.Addr().Network(), l.Addr().String())
+		if err != nil {
+			t.Error(err)
+		}
+		defer conn.Close()
+
+		// Ensure the handshake has completed
+		if err := conn.(*roast.Conn).HandshakeContext(ctx); err != nil {
+			t.Error(err)
+		}
+		t.Logf("client: Handshake done on %#v", conn)
+
+		ctx = roast.AttachPeerMetadataToContext(ctx, conn)
+		peer := roast.PeerMetadataFromContext(ctx)
+		if peer == nil {
+			t.Error("expected peer metadata after Dial & Attach")
+		}
+
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		t.Error(err)
 	}
 }

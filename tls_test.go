@@ -24,7 +24,7 @@ func TestEnsureNoClearTextOnTheWire(t *testing.T) {
 	// Testing infra setup, now we can run an upgrade from both sides and send some data through
 	var g errgroup.Group
 	g.Go(func() error { // Server is gonna be an echo server
-		tlsConn, err := rl.UpgradeServerConn(context.Background(), right)
+		tlsConn, _, err := rl.UpgradeServerConn(context.Background(), right)
 		if err != nil {
 			return errorutil.Wrap(err, "failed to upgrade server conn")
 		}
@@ -38,7 +38,7 @@ func TestEnsureNoClearTextOnTheWire(t *testing.T) {
 
 	const CLEARTEXT = "Hello World! I am some unencrypted data, I shouldn't show up."
 	g.Go(func() error {
-		tlsConn, err := rd.UpgradeClientConn(context.Background(), left)
+		tlsConn, _, err := rd.UpgradeClientConn(context.Background(), left)
 		if err != nil {
 			return errorutil.Wrap(err, "failed to upgrade client conn")
 		}

@@ -45,22 +45,28 @@ func (l *Listener) Accept() (net.Conn, error) {
 		return nil, err
 	}
 
-	// TODO: Figure out how to better handle errors here, http.Server doesn't
-	// like it when Accept errors.
-	return l.UpgradeServerConn(context.Background(), conn)
+	c := &Conn{
+		Conn:          conn,
+		handshakeFunc: l.UpgradeServerConn,
+	}
+
+	// Proactively trigger a handshake, don't wait for the first read/write and ignore any errors
+	go c.HandshakeContext(context.Background())
+
+	return c, nil
 }
 
-func (l *Listener) UpgradeServerConn(ctx context.Context, c net.Conn) (*tls.Conn, error) {
+func (l *Listener) UpgradeServerConn(ctx context.Context, c net.Conn) (*tls.Conn, *PeerMetadata, error) {
 	tlsConf, peerMetadata, err := serverHandshake(ctx, c, l.Signer, l.Verifier)
 	if err != nil {
-		return nil, errorutil.Wrap(err, "failed to complete a handshake")
+		return nil, nil, errorutil.Wrap(err, "failed to complete a roast handshake")
 	}
 
-	tlsConn := tls.Server(&Conn{Conn: c, Peer: peerMetadata}, tlsConf)
+	tlsConn := tls.Server(c, tlsConf)
 
 	if err := tlsConn.HandshakeContext(ctx); err != nil {
-		return nil, errorutil.Wrap(err, "failed to complete a handshake")
+		return nil, nil, errorutil.Wrap(err, "failed to complete a tls handshake")
 	}
 
-	return tlsConn, nil
+	return tlsConn, peerMetadata, nil
 }

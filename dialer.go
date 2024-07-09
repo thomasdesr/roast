@@ -45,20 +45,28 @@ func (d *Dialer) DialContext(ctx context.Context, network, address string) (net.
 		return nil, err
 	}
 
-	return d.UpgradeClientConn(ctx, conn)
+	c := &Conn{
+		Conn:          conn,
+		handshakeFunc: d.UpgradeClientConn,
+	}
+
+	// Proactively try to trigger a handshake, don't wait for the first read/write, but ignore any errors
+	go c.HandshakeContext(ctx)
+
+	return c, nil
 }
 
-func (d *Dialer) UpgradeClientConn(ctx context.Context, c net.Conn) (*tls.Conn, error) {
+func (d *Dialer) UpgradeClientConn(ctx context.Context, c net.Conn) (*tls.Conn, *PeerMetadata, error) {
 	tlsConf, peerMetadata, err := clientHandshake(ctx, c, d.Signer, d.Verifier)
 	if err != nil {
-		return nil, errorutil.Wrap(err, "failed to complete a handshake")
+		return nil, nil, errorutil.Wrap(err, "failed to complete a roast handshake")
 	}
 
-	tlsConn := tls.Client(&Conn{Conn: c, Peer: peerMetadata}, tlsConf)
+	tlsConn := tls.Client(c, tlsConf)
 
 	if err := tlsConn.HandshakeContext(ctx); err != nil {
-		return nil, errorutil.Wrap(err, "failed to complete a handshake")
+		return nil, nil, errorutil.Wrap(err, "failed to complete a tls handshake")
 	}
 
-	return tlsConn, nil
+	return tlsConn, peerMetadata, nil
 }
