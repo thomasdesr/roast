@@ -14,11 +14,11 @@ type PeerMetadata struct {
 }
 
 type (
-	peerMetadataContextKey struct{}
+	peerConnContextKey struct{}
 )
 
 var (
-	peerMetadataKeyInstance = peerMetadataContextKey{}
+	peerConnContextKeyInstance = peerConnContextKey{}
 )
 
 func AttachPeerMetadataToContext(ctx context.Context, c net.Conn) context.Context {
@@ -28,7 +28,7 @@ func AttachPeerMetadataToContext(ctx context.Context, c net.Conn) context.Contex
 		return ctx
 	}
 
-	return context.WithValue(ctx, peerMetadataKeyInstance, rConn.Peer)
+	return context.WithValue(ctx, peerConnContextKeyInstance, rConn)
 }
 
 func maybeGetRoastConn(conn net.Conn) *Conn {
@@ -44,10 +44,10 @@ func maybeGetRoastConn(conn net.Conn) *Conn {
 }
 
 func PeerMetadataFromContext(ctx context.Context) *PeerMetadata {
-	rConn, ok := ctx.Value(peerMetadataKeyInstance).(*PeerMetadata)
+	rConn, ok := ctx.Value(peerConnContextKeyInstance).(*Conn)
 	if !ok {
 		return nil
 	}
 
-	return rConn
+	return rConn.Peer
 }
