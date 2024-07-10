@@ -67,7 +67,7 @@ func baseX509Cert() *x509.Certificate {
 	template := &x509.Certificate{
 		SerialNumber: serialNumber,
 		NotBefore:    time.Now(),
-		NotAfter:     time.Now().Add(time.Hour * 24),
+		NotAfter:     time.Now().Add(time.Minute * 15),
 	}
 
 	return template
