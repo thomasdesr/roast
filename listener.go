@@ -50,7 +50,8 @@ func (l *Listener) Accept() (net.Conn, error) {
 		handshakeFunc: l.UpgradeServerConn,
 	}
 
-	// Proactively trigger a handshake, don't wait for the first read/write and ignore any errors
+	// Proactively trigger a handshake, and ignore any errors (they'll be
+	// returned on any read/write).
 	go c.HandshakeContext(context.Background())
 
 	return c, nil

@@ -50,8 +50,11 @@ func (d *Dialer) DialContext(ctx context.Context, network, address string) (net.
 		handshakeFunc: d.UpgradeClientConn,
 	}
 
-	// Proactively try to trigger a handshake, don't wait for the first read/write, but ignore any errors
-	go c.HandshakeContext(ctx)
+	// Proactively try to trigger a handshake. This is a Dial so ensure this
+	// happens before we give the connection back to the caller.
+	if err := c.HandshakeContext(ctx); err != nil {
+		return nil, errorutil.Wrap(err, "failed to complete a roast handshake")
+	}
 
 	return c, nil
 }

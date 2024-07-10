@@ -48,11 +48,10 @@ func TestContextOnPair(t *testing.T) {
 		}
 		defer conn.Close()
 
-		// Ensure the handshake has completed
+		// Ensure the handshake has completed (server handshake is async before a read/write)
 		if err := conn.(*roast.Conn).HandshakeContext(ctx); err != nil {
 			t.Error(err)
 		}
-		t.Logf("server: Handshake done on %#v", conn)
 
 		ctx := roast.AttachPeerMetadataToContext(ctx, conn)
 		peer := roast.PeerMetadataFromContext(ctx)
@@ -70,13 +69,7 @@ func TestContextOnPair(t *testing.T) {
 		}
 		defer conn.Close()
 
-		// Ensure the handshake has completed
-		if err := conn.(*roast.Conn).HandshakeContext(ctx); err != nil {
-			t.Error(err)
-		}
-		t.Logf("client: Handshake done on %#v", conn)
-
-		ctx = roast.AttachPeerMetadataToContext(ctx, conn)
+		ctx := roast.AttachPeerMetadataToContext(ctx, conn)
 		peer := roast.PeerMetadataFromContext(ctx)
 		if peer == nil {
 			t.Error("expected peer metadata after Dial & Attach")
