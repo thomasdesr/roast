@@ -1,9 +1,13 @@
 package awsapi
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
 type Region string
 
 const (
-	Region_INVALID        Region = ""
 	Region_US_EAST_1      Region = "us-east-1"
 	Region_US_EAST_2      Region = "us-east-2"
 	Region_US_WEST_1      Region = "us-west-1"
@@ -28,12 +32,24 @@ const (
 	Region_AP_NORTHEAST_3 Region = "ap-northeast-3"
 )
 
-func ToRegion(s string) Region {
-	r := Region(s)
+func (r Region) MarshalJSON() ([]byte, error) {
 	if !r.IsValid() {
-		return Region(Region_INVALID)
+		return nil, fmt.Errorf("invalid region: %q", string(r))
 	}
-	return r
+	return json.Marshal(string(r))
+}
+
+func (r *Region) UnmarshalJSON(b []byte) error {
+	rs := (*string)(r)
+	if err := json.Unmarshal(b, rs); err != nil {
+		return err
+	}
+
+	if !r.IsValid() {
+		return fmt.Errorf("invalid region: %q", *r)
+	}
+
+	return nil
 }
 
 func (r Region) String() string {

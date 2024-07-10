@@ -30,7 +30,7 @@ func TestEnsureNoClearTextOnTheWire(t *testing.T) {
 		}
 		defer tlsConn.Close()
 
-		// Be an server on the server side
+		// Be an echo server on the server side
 		_, err = io.Copy(tlsConn, tlsConn)
 
 		return err

@@ -103,10 +103,6 @@ func (v *unconstrainedSigV4Verifier) VerifyPayload(ctx context.Context, msg *Unv
 }
 
 func canonicalRequestFrom(ctx context.Context, msg *UnverifiedMessage) (*http.Request, []byte, error) {
-	if !msg.Region.IsValid() {
-		return nil, nil, fmt.Errorf("invalid region: %q", msg.Region)
-	}
-
 	// Construct sts:GetCallerIdentity URL for verification
 	uri, _ := url.Parse(strings.Replace(awsapi.RegionalGetCallerIdentityURLTemplate, "{region}", msg.Region.String(), 1))
 
