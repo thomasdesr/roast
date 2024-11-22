@@ -82,6 +82,7 @@ func (f *fakeGCIS) Sign(ctx context.Context, payload []byte) (*gcisigner.SignedM
 	return &gcisigner.SignedMessage{
 		Body:             payload,
 		AmzAuthorization: hex.EncodeToString(kmac.Sum(nil)),
+		Region:           awsapi.Region_US_WEST_2,
 	}, nil
 }
 
