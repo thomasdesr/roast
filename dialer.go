@@ -18,25 +18,34 @@ type Dialer struct {
 	Verifier gcisigner.Verifier
 }
 
-func NewDialer(allowedServerRoles []arn.ARN) (*Dialer, error) {
-	config, err := config.LoadDefaultConfig(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
-	signer, err := gcisigner.NewSigner(config.Region, config.Credentials)
-	if err != nil {
-		return nil, errorutil.Wrap(err, "failed to create signer")
-	}
-
-	verifier := gcisigner.NewVerifier(assumedRoleInRoles(allowedServerRoles), nil)
-
-	return &Dialer{
+func NewDialer(allowedServerRoles []arn.ARN, opts ...Option[Dialer]) (*Dialer, error) {
+	d := &Dialer{
 		Dialer: (&net.Dialer{}).DialContext,
+	}
 
-		Signer:   signer,
-		Verifier: verifier,
-	}, nil
+	for _, opt := range opts {
+		if err := opt(d); err != nil {
+			return nil, errorutil.Wrap(err, "failed to apply dialer option")
+		}
+	}
+
+	// Fallback to defaults if not set
+	if d.Signer == nil {
+		config, err := config.LoadDefaultConfig(context.Background())
+		if err != nil {
+			return nil, errorutil.Wrap(err, "failed to load default AWS config")
+		}
+
+		if err := WithAWSConfig[Dialer](&config)(d); err != nil {
+			return nil, errorutil.Wrap(err, "failed to create signer from default config")
+		}
+	}
+
+	if d.Verifier == nil {
+		d.Verifier = gcisigner.NewVerifier(assumedRoleInRoles(allowedServerRoles), nil)
+	}
+
+	return d, nil
 }
 
 func (d *Dialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {

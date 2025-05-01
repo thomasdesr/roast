@@ -18,25 +18,34 @@ type Listener struct {
 	Verifier gcisigner.Verifier
 }
 
-func NewListener(l net.Listener, allowedClientRoles []arn.ARN) (*Listener, error) {
-	config, err := config.LoadDefaultConfig(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
-	signer, err := gcisigner.NewSigner(config.Region, config.Credentials)
-	if err != nil {
-		return nil, errorutil.Wrap(err, "failed to create signer")
-	}
-
-	verifier := gcisigner.NewVerifier(assumedRoleInRoles(allowedClientRoles), nil)
-
-	return &Listener{
+func NewListener(l net.Listener, allowedClientRoles []arn.ARN, opts ...Option[Listener]) (*Listener, error) {
+	rl := &Listener{
 		Listener: l,
+	}
 
-		Signer:   signer,
-		Verifier: verifier,
-	}, nil
+	for _, opt := range opts {
+		if err := opt(rl); err != nil {
+			return nil, errorutil.Wrap(err, "failed to apply listener option")
+		}
+	}
+
+	// Fallback to defaults if not set
+	if rl.Signer == nil {
+		config, err := config.LoadDefaultConfig(context.Background())
+		if err != nil {
+			return nil, err
+		}
+
+		if err := WithAWSConfig[Listener](&config)(rl); err != nil {
+			return nil, errorutil.Wrap(err, "failed to create signer from default config")
+		}
+	}
+
+	if rl.Verifier == nil {
+		rl.Verifier = gcisigner.NewVerifier(assumedRoleInRoles(allowedClientRoles), nil)
+	}
+
+	return rl, nil
 }
 
 func (l *Listener) Accept() (net.Conn, error) {
