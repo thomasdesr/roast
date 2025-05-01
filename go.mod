@@ -1,12 +1,12 @@
 module github.com/thomasdesr/roast
 
-go 1.21
+go 1.23.0
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.30.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.29.1
 	golang.org/x/crypto v0.25.0
-	golang.org/x/sync v0.7.0
+	golang.org/x/sync v0.13.0
 )
 
 require (
