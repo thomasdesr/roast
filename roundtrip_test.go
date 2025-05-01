@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	roast "github.com/thomasdesr/roast"
 	"github.com/thomasdesr/roast/internal/errorutil"
@@ -21,19 +20,14 @@ import (
 
 func TestRoundTripWithRealCredentials(t *testing.T) {
 	ctx := context.Background()
-	if !testutils.HasAWSCredentials(ctx) {
-		t.Skip("no AWS credentials, skipping")
-	}
 
-	config, err := config.LoadDefaultConfig(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
+	config := testutils.AWSConfigIfHasCredentials(t)
 
 	localARN, err := testutils.GetLocalRole(ctx, sts.NewFromConfig(config))
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Using local ARN: %s", localARN)
 
 	listener, dialCtx := testutils.ListenerDialer(t)
 

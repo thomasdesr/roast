@@ -4,24 +4,29 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
+	"testing"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
 
-func HasAWSCredentials(ctx context.Context) bool {
-	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
-	defer cancel()
+func AWSConfigIfHasCredentials(tb testing.TB) aws.Config {
+	tb.Helper()
+
+	ctx := context.Background()
 
 	config, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		return false
+		tb.Fatalf("loading default config: %v", err)
 	}
 
-	_, err = config.Credentials.Retrieve(ctx)
-	return err == nil
+	if _, err := config.Credentials.Retrieve(ctx); err != nil {
+		tb.Skipf("didn't find any credentials to use, skipping: %v", err)
+	}
+
+	return config
 }
 
 func GetLocalRole(ctx context.Context, sts *sts.Client) (arn.ARN, error) {
