@@ -27,18 +27,18 @@ func TestRoundTripWithRealCredentials(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Using local ARN: %s", localARN)
+	t.Logf("Using local ARN: %v", localARN)
 
 	listener, dialCtx := testutils.ListenerDialer(t)
 
 	// Construct our tls listener and dialer
-	tlsDialer, err := roast.NewDialer([]arn.ARN{localARN})
+	tlsDialer, err := roast.NewDialer([]arn.ARN{localARN.ARN()})
 	if err != nil {
 		t.Fatal(err)
 	}
 	tlsDialer.Dialer = dialCtx
 
-	tlsListener, err := roast.NewListener(listener, []arn.ARN{localARN})
+	tlsListener, err := roast.NewListener(listener, []arn.ARN{localARN.ARN()})
 	if err != nil {
 		t.Fatal(err)
 	}
