@@ -10,6 +10,7 @@ import (
 	"github.com/thomasdesr/roast/gcisigner"
 	"github.com/thomasdesr/roast/gcisigner/awsapi"
 	"github.com/thomasdesr/roast/gcisigner/internal/masker"
+	"github.com/thomasdesr/roast/gcisigner/source_verifiers"
 )
 
 func TestVerifyAWSRequestBad(t *testing.T) {
@@ -45,10 +46,10 @@ func TestVerify(t *testing.T) {
 	defer srv.Close()
 
 	v := gcisigner.NewVerifier(
-		func(*awsapi.GetCallerIdentityResult) (bool, error) {
+		source_verifiers.VerifyFunc(func(*awsapi.GetCallerIdentityResult) (bool, error) {
 			// Any source is good for this call
 			return true, nil
-		},
+		}),
 		httptestServerTransport(srv),
 	)
 
@@ -89,10 +90,10 @@ func TestVerifyBadSource(t *testing.T) {
 	defer srv.Close()
 
 	v := gcisigner.NewVerifier(
-		func(*awsapi.GetCallerIdentityResult) (bool, error) {
+		source_verifiers.VerifyFunc(func(*awsapi.GetCallerIdentityResult) (bool, error) {
 			// Any source is bad
 			return false, nil
-		},
+		}),
 		httptestServerTransport(srv),
 	)
 

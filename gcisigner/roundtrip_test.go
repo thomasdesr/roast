@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/thomasdesr/roast/gcisigner"
 	"github.com/thomasdesr/roast/gcisigner/source_verifiers"
+	"github.com/thomasdesr/roast/gcisigner/source_verifiers/sources"
 	"github.com/thomasdesr/roast/internal/testutils"
 )
 
@@ -33,7 +33,7 @@ func TestLiveRoundTrip(t *testing.T) {
 
 	debugPrintSignedMessage(t, signedMessage)
 
-	verifier := gcisigner.NewVerifier(source_verifiers.MatchesRoles([]arn.ARN{localRole}), nil)
+	verifier := gcisigner.NewVerifier(source_verifiers.MatchesAny([]sources.Role{localRole}), nil)
 
 	verifiedMessage, err := verifier.Verify(context.Background(), (*gcisigner.UnverifiedMessage)(signedMessage))
 	if err != nil {

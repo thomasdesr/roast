@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/thomasdesr/roast/gcisigner"
 	"github.com/thomasdesr/roast/gcisigner/awsapi"
+	"github.com/thomasdesr/roast/gcisigner/source_verifiers"
 )
 
 func TestSignVerifyRoundtrip(t *testing.T) {
@@ -36,9 +37,9 @@ func TestSignVerifyRoundtrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	verifier := gcisigner.NewVerifier(func(*awsapi.GetCallerIdentityResult) (bool, error) {
+	verifier := gcisigner.NewVerifier(source_verifiers.VerifyFunc(func(*awsapi.GetCallerIdentityResult) (bool, error) {
 		return true, nil
-	}, httptestServerTransport(srv))
+	}), httptestServerTransport(srv))
 
 	verifiedMessage, err := verifier.Verify(context.Background(), (*gcisigner.UnverifiedMessage)(signedMessage))
 	if err != nil {
