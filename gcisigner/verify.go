@@ -29,18 +29,14 @@ type SigV4Verifier struct {
 
 var _ Verifier = &SigV4Verifier{}
 
-// SourceVerifier is a function that is called when a SigV4Verifier is
-// attempting to determine if a client should be allowed to connect. You can
-// rely on its argument never being null.
-type SourceVerifier func(*awsapi.GetCallerIdentityResult) (bool, error)
-
 func NewVerifier(validSources SourceVerifier, tr http.RoundTripper) *SigV4Verifier {
 	// We should never get a redirect, so we can safely ignore them
 	nonRedirectingClient := &http.Client{
 		Transport: tr,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
-		}}
+		},
+	}
 
 	return &SigV4Verifier{
 		raw: unconstrainedSigV4Verifier{c: nonRedirectingClient},
