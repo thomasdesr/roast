@@ -20,6 +20,7 @@ import (
 
 func TestRoundTripWithRealCredentials(t *testing.T) {
 	ctx := context.Background()
+	ctx = testutils.WithHTTPTrace(t, ctx)
 
 	config := testutils.AWSConfigIfHasCredentials(t)
 
@@ -29,25 +30,26 @@ func TestRoundTripWithRealCredentials(t *testing.T) {
 	}
 	t.Logf("Using local ARN: %v", localARN)
 
-	listener, dialCtx := testutils.ListenerDialer(t)
+	rawListener, rawDialer := testutils.ListenerDialer(t)
 
 	// Construct our tls listener and dialer
-	tlsDialer, err := roast.NewDialer([]arn.ARN{localARN.ARN()})
+	rd, err := roast.NewDialer([]arn.ARN{localARN.ARN()})
 	if err != nil {
 		t.Fatal(err)
 	}
-	tlsDialer.Dialer = dialCtx
+	rd.Dialer = rawDialer
 
-	tlsListener, err := roast.NewListener(listener, []arn.ARN{localARN.ARN()})
+	t.Log("Dialer:", rd)
+
+	rl, err := roast.NewListener(rawListener, []arn.ARN{localARN.ARN()})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Second*5)
-	defer cancel()
+	t.Log("Listener:", rl)
 
 	// And send the hello world through!
-	runRoundTrip(ctxWithTimeout, t, tlsListener, tlsDialer.DialContext)
+	runRoundTrip(ctx, t, rl, rd.DialContext)
 	t.Log("success")
 }
 
@@ -60,45 +62,56 @@ func TestRoundTrip(t *testing.T) {
 }
 
 func runRoundTrip(ctx context.Context, t *testing.T, listener net.Listener, dialCtx func(context.Context, string, string) (net.Conn, error)) {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*1)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
-	g, ctx := errgroup.WithContext(ctx)
+
+	var g errgroup.Group
 
 	g.Go(func() error { // Server side
+		t.Log("Server Side: Waiting for connection")
 		c, err := listener.Accept()
 		if err != nil {
 			return errorutil.Wrap(err, "accept failed")
 		}
 		defer c.Close()
+		// defer context.AfterFunc(ctx, func() { t.Log("Context canceled, closing server side of the connection", c.Close()) })
 
 		// Server copies any data it recieves back to the client
+		t.Log("Server side: copying data")
 		if _, err := io.Copy(c, c); err != nil && err != io.EOF {
 			return errorutil.Wrap(err, "copy failed")
 		}
+
+		t.Log("Server side: copy complete, exiting cleanly")
 
 		return nil
 	})
 
 	g.Go(func() error { // Client side
+		t.Log("Client Side: Opening connection")
 		c, err := dialCtx(ctx, listener.Addr().Network(), listener.Addr().String())
 		if err != nil {
 			return errorutil.Wrap(err, "dial failed")
 		}
 		defer c.Close()
+		// defer context.AfterFunc(ctx, func() { t.Log("Context canceled, closing client side of connection", c.Close()) })
 
 		messageToRoundTrip := []byte("hello world")
 
 		// Write some data into the conn so it'll get echo'd back to us
 		g.Go(func() error {
+			t.Log("Client Side: Writing data")
 			if _, err := c.Write(messageToRoundTrip); err != nil {
 				return errorutil.Wrap(err, "write failed")
 			}
+			t.Log("Client Side: Writing complete")
 			return nil
 		})
 
 		// Ensure the data is comes back
+		t.Log("Client Side: Reading data")
 		hello := make([]byte, 1024)
-		n, err := c.Read(hello)
+		n, err := io.ReadAtLeast(c, hello, len(messageToRoundTrip))
 		if err != nil {
 			return errorutil.Wrap(err, "read failed")
 		}
@@ -108,7 +121,15 @@ func runRoundTrip(ctx context.Context, t *testing.T, listener net.Listener, dial
 			return fmt.Errorf("read: unexpected message: %q", hello)
 		}
 
-		t.Log("read success:", string(hello))
+		t.Log("Client Side: Read success:", string(hello))
+
+		// Note this close is pretty load bearing, the server isn't ever gonna give up as long as the client is connected
+		t.Log("Client Side: Read complete, closing client side of connection to trigger server side close")
+		if err := c.Close(); err != nil {
+			t.Logf("Failed to close client side connection: %v", err)
+		}
+
+		t.Log("Client Side: roundtrip complete, exitingly cleanly")
 
 		return nil
 	})
