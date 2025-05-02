@@ -25,7 +25,7 @@ func GetLocalRole(ctx context.Context, sts *sts.Client) (sources.Role, error) {
 		return sources.Role{}, errorutil.Wrap(err, "failed to parse caller identity arn")
 	}
 
-	sessionIssuer, err := assumedRole.ParentRole()
+	sessionIssuer, err := assumedRole.SessionIssuer()
 	if err != nil {
 		return sources.Role{}, errorutil.Wrap(err, "failed to get parent role")
 	}

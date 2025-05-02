@@ -41,7 +41,7 @@ func MatchesAny(allowedRoles []sources.Role) Verifier {
 		}
 
 		// Get the parent role from the assumed role
-		parentRole, err := assumedRole.ParentRole()
+		parentRole, err := assumedRole.SessionIssuer()
 		if err != nil {
 			return false, errorutil.Wrap(err, "failed to get parent role from assumed role")
 		}

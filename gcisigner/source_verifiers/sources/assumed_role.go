@@ -72,8 +72,8 @@ func (a AssumedRole) SessionName() string {
 	return parts[2]
 }
 
-// ParentRole returns the parent IAM role of the assumed role
-func (a AssumedRole) ParentRole() (Role, error) {
+// SessionIssuer returns the IAM role that minted the assumed role
+func (a AssumedRole) SessionIssuer() (Role, error) {
 	roleName := a.RoleName()
 	if roleName == "" {
 		return Role{}, ErrInvalidAssumedRoleARN
