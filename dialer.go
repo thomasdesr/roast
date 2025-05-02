@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/thomasdesr/roast/gcisigner"
+	"github.com/thomasdesr/roast/gcisigner/source_verifiers"
 	"github.com/thomasdesr/roast/internal/errorutil"
 )
 
@@ -42,7 +43,12 @@ func NewDialer(allowedServerRoles []arn.ARN, opts ...Option[Dialer]) (*Dialer, e
 	}
 
 	if d.Verifier == nil {
-		d.Verifier = gcisigner.NewVerifier(assumedRoleInRoles(allowedServerRoles), nil)
+		serverRoles, err := parseRolesToSources(allowedServerRoles)
+		if err != nil {
+			return nil, errorutil.Wrap(err, "failed to parse server roles")
+		}
+
+		d.Verifier = gcisigner.NewVerifier(source_verifiers.MatchesAny(serverRoles), nil)
 	}
 
 	return d, nil
