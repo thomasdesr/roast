@@ -18,19 +18,32 @@ import (
 func localValidListenerAndDialer(t testing.TB) (*roast.Listener, *roast.Dialer) {
 	clientRole := arn.ARN{
 		Partition: "aws",
-		Service:   "sts",
+		Service:   "iam",
 		Region:    "",
 		AccountID: "1234567890",
-		Resource:  "assumed-role/ClientRole",
+		Resource:  "role/ClientRole",
 	}
-	serverRole := arn.ARN{
+	clientAssumedRole := arn.ARN{
 		Partition: "aws",
 		Service:   "sts",
 		Region:    "",
 		AccountID: "1234567890",
-		Resource:  "assumed-role/ServerRole",
+		Resource:  "assumed-role/ClientRole/ClientRoleSession",
 	}
-
+	serverRole := arn.ARN{
+		Partition: "aws",
+		Service:   "iam",
+		Region:    "",
+		AccountID: "1234567890",
+		Resource:  "role/ServerRole",
+	}
+	serverAssumedRole := arn.ARN{
+		Partition: "aws",
+		Service:   "sts",
+		Region:    "",
+		AccountID: "1234567890",
+		Resource:  "assumed-role/ServerRole/ServerRoleSession",
+	}
 	gcisKey := make([]byte, 32)
 	rand.Read(gcisKey)
 
@@ -40,7 +53,7 @@ func localValidListenerAndDialer(t testing.TB) (*roast.Listener, *roast.Dialer) 
 	serverGCIS := &fakeGCIS{
 		key: gcisKey,
 		callerIdentity: awsapi.GetCallerIdentityResult{
-			Arn: clientRole.String(),
+			Arn: clientAssumedRole.String(),
 		},
 	}
 
@@ -54,7 +67,7 @@ func localValidListenerAndDialer(t testing.TB) (*roast.Listener, *roast.Dialer) 
 	clientGCIS := &fakeGCIS{
 		key: gcisKey,
 		callerIdentity: awsapi.GetCallerIdentityResult{
-			Arn: serverRole.String(),
+			Arn: serverAssumedRole.String(),
 		},
 	}
 

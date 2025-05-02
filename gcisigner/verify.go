@@ -11,6 +11,7 @@ import (
 
 	"github.com/thomasdesr/roast/gcisigner/awsapi"
 	"github.com/thomasdesr/roast/gcisigner/internal/masker"
+	"github.com/thomasdesr/roast/gcisigner/source_verifiers"
 	"github.com/thomasdesr/roast/internal/errorutil"
 )
 
@@ -24,28 +25,24 @@ type Verifier interface {
 type SigV4Verifier struct {
 	raw unconstrainedSigV4Verifier
 
-	IsValidSource SourceVerifier
+	verifier source_verifiers.Verifier
 }
 
 var _ Verifier = &SigV4Verifier{}
 
-// SourceVerifier is a function that is called when a SigV4Verifier is
-// attempting to determine if a client should be allowed to connect. You can
-// rely on its argument never being null.
-type SourceVerifier func(*awsapi.GetCallerIdentityResult) (bool, error)
-
-func NewVerifier(validSources SourceVerifier, tr http.RoundTripper) *SigV4Verifier {
+func NewVerifier(validSources source_verifiers.Verifier, tr http.RoundTripper) *SigV4Verifier {
 	// We should never get a redirect, so we can safely ignore them
 	nonRedirectingClient := &http.Client{
 		Transport: tr,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
-		}}
+		},
+	}
 
 	return &SigV4Verifier{
 		raw: unconstrainedSigV4Verifier{c: nonRedirectingClient},
 
-		IsValidSource: validSources,
+		verifier: validSources,
 	}
 }
 
@@ -57,7 +54,7 @@ func (v *SigV4Verifier) Verify(ctx context.Context, msg *UnverifiedMessage) (*Ve
 		panic("gcir should never be nil if there wasn't an error")
 	}
 
-	if ok, err := v.IsValidSource(gcir); err != nil {
+	if ok, err := v.verifier.Verify(gcir); err != nil {
 		return nil, errorutil.Wrap(err, "failed to verify source")
 	} else if !ok {
 		return nil, fmt.Errorf("msg came from an invalid source: %v", gcir)

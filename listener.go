@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/thomasdesr/roast/gcisigner"
+	"github.com/thomasdesr/roast/gcisigner/source_verifiers"
 	"github.com/thomasdesr/roast/internal/errorutil"
 )
 
@@ -42,7 +43,12 @@ func NewListener(l net.Listener, allowedClientRoles []arn.ARN, opts ...Option[Li
 	}
 
 	if rl.Verifier == nil {
-		rl.Verifier = gcisigner.NewVerifier(assumedRoleInRoles(allowedClientRoles), nil)
+		allowedClients, err := parseRolesToSources(allowedClientRoles)
+		if err != nil {
+			return nil, errorutil.Wrap(err, "failed to parse allowed client roles")
+		}
+
+		rl.Verifier = gcisigner.NewVerifier(source_verifiers.MatchesAny(allowedClients), nil)
 	}
 
 	return rl, nil
