@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"net"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -17,11 +18,17 @@ type Listener struct {
 
 	Signer   gcisigner.Signer
 	Verifier gcisigner.Verifier
+
+	// Total time to allow clients to complete a handshake before abandoning the
+	// connection.
+	handshakeTimeout time.Duration
 }
 
 func NewListener(l net.Listener, allowedClientRoles []arn.ARN, opts ...Option[Listener]) (*Listener, error) {
 	rl := &Listener{
 		Listener: l,
+
+		handshakeTimeout: 15 * time.Second,
 	}
 
 	for _, opt := range opts {
@@ -73,6 +80,10 @@ func (l *Listener) Accept() (net.Conn, error) {
 }
 
 func (l *Listener) UpgradeServerConn(ctx context.Context, c net.Conn) (*tls.Conn, *PeerMetadata, error) {
+	// Enforce the handshake timeout
+	c.SetDeadline(time.Now().Add(l.handshakeTimeout))
+	defer c.SetDeadline(time.Time{})
+
 	tlsConf, peerMetadata, err := serverHandshake(ctx, c, l.Signer, l.Verifier)
 	if err != nil {
 		return nil, nil, errorutil.Wrap(err, "failed to complete a roast handshake")

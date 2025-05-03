@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"net"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -17,11 +18,17 @@ type Dialer struct {
 
 	Signer   gcisigner.Signer
 	Verifier gcisigner.Verifier
+
+	// Total time to allow clients to complete a handshake before abandoning the
+	// connection.
+	handshakeTimeout time.Duration
 }
 
 func NewDialer(allowedServerRoles []arn.ARN, opts ...Option[Dialer]) (*Dialer, error) {
 	d := &Dialer{
 		Dialer: (&net.Dialer{}).DialContext,
+
+		handshakeTimeout: 15 * time.Second,
 	}
 
 	for _, opt := range opts {
@@ -30,7 +37,7 @@ func NewDialer(allowedServerRoles []arn.ARN, opts ...Option[Dialer]) (*Dialer, e
 		}
 	}
 
-	// Fallback to defaults if not set
+	// Fallback to defaults if not set for defaults which could fail
 	if d.Signer == nil {
 		config, err := config.LoadDefaultConfig(context.Background())
 		if err != nil {
@@ -75,6 +82,10 @@ func (d *Dialer) DialContext(ctx context.Context, network, address string) (net.
 }
 
 func (d *Dialer) UpgradeClientConn(ctx context.Context, c net.Conn) (*tls.Conn, *PeerMetadata, error) {
+	// Enforce the handshake timeout
+	c.SetDeadline(time.Now().Add(d.handshakeTimeout))
+	defer c.SetDeadline(time.Time{})
+
 	tlsConf, peerMetadata, err := clientHandshake(ctx, c, d.Signer, d.Verifier)
 	if err != nil {
 		return nil, nil, errorutil.Wrap(err, "failed to complete a roast handshake")
