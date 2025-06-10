@@ -1,4 +1,4 @@
-module github.com/thomasdesr/roast/rhttp2/cmd/roast-auth-gateway
+module github.com/thomasdesr/roast/rhttp2/cmd/roast-auth-reverseproxy
 
 go 1.23.4
 
