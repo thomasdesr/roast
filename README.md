@@ -1,6 +1,6 @@
 # Roast: Simplified mTLS for AWS
 
-**Roast simplies deployment mutual TLS authentication by building on top of your
+**Roast simplifies deployment mutual TLS authentication by building on top of your
 existing AWS IAM identities rather than requiring a separate Certificate
 Authority.**
 
@@ -24,8 +24,8 @@ Traditional mTLS implementations often involve operational challenges:
 ## Approach
 
 Roast takes a different approach by building on AWS's existing identity
-infrastructure. If you're already already using AWS IAM for identity management,
-Roast will leverages that same system for service-to-service authentication.
+infrastructure. If you're already using AWS IAM for identity management, then
+Roast makes it easy to leverage the same system for authentication.
 
 This approach can provide:
 - **Familiar identity model** - Use your existing IAM roles for service
@@ -47,18 +47,20 @@ For HTTP services, use the `rhttp2` package:
 
 ```go
 // HTTP Server
-allowedClientRoles := mustParseRoleList("arn:aws:iam::123456789012:role/MyClient")
+clientRole, _ := arn.Parse("arn:aws:iam::123456789012:role/MyClient")
 srv := &rhttp2.Server{
     Server: &http.Server{
         Handler: yourHandler,
     },
-    AllowedRoles: allowedClientRoles,
+    AllowedRoles: []arn.ARN{clientRole},
 }
 err := srv.Serve(listener)
+```
 
+```go
 // HTTP Client
-allowedServerRoles := mustParseRoleList("arn:aws:iam::123456789012:role/MyServer")
-client, err := rhttp2.Client(allowedServerRoles)
+serverRole, _ := arn.Parse("arn:aws:iam::123456789012:role/MyServer")
+client, err := rhttp2.Client([]arn.ARN{serverRole})
 resp, err := client.Get("https://server-address")
 ```
 
@@ -67,13 +69,15 @@ resp, err := client.Get("https://server-address")
 For lower-level TCP connections handling:
 
 ```go
-// Client: specify which server roles you expect
-allowedServerRoles := mustParseRoleList("arn:aws:iam::123456789012:role/MyServer")
-conn, err := roast.NewDialer(allowedServerRoles).DialContext("tcp", serverAddr)
+// Client
+serverRole, _ := arn.Parse("arn:aws:iam::123456789012:role/MyServer")
+conn, err := roast.NewDialer([]arn.ARN{serverRole}).DialContext("tcp", serverAddr)
+```
 
-// Server: specify which client roles you expect
-allowedClientRoles := mustParseRoleList("arn:aws:iam::123456789012:role/MyClient")
-listener, err := roast.NewListener(rawListener, allowedClientRoles)
+```
+// Server
+clientRole, _ := arn.Parse("arn:aws:iam::123456789012:role/MyClient")
+listener, err := roast.NewListener(rawListener, []arn.ARN{clientRole})
 // for { listener.Accept() [...] }
 ```
 

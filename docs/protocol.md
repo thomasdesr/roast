@@ -23,7 +23,7 @@
 
 ## SigV4 + GetCallerIdentity == `Sign(🥳)`
 
-AWS's primary authentication mechanism (SigV4) is one of the most robust pieces of authentication technology in widespread use today. As an authentication mechanism, it provides signifiantly more than a simple identity tokens (a.k.a. Bearer Tokens). It ensures that AWS can validate not only which identity sent the request, but also the integrity of the entire request, including the HTTP method, chosen headers, and body.
+AWS's primary authentication mechanism (SigV4) is one of the most robust pieces of authentication technology in widespread use today. As an authentication mechanism, it provides significantly more than a simple identity tokens (a.k.a. Bearer Tokens). It ensures that AWS can validate not only which identity sent the request, but also the integrity of the entire request, including the HTTP method, chosen headers, and body.
 
 AWS has an API called `GetCallerIdentity` which allows anyone with AWS Credentials to ask "Who am I?". This is normally used by humans for debugging.
 

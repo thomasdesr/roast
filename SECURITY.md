@@ -24,16 +24,17 @@ This document describes Roast's security properties and requirements. For techni
 - The security of new Roast connections is fundamentally limited by the security of
   your AWS credential management. If a malicious party can access IAM
   Credentials for a role in the allowed list, they will be able to initiate or
-  recieve new connections. Existing connections should be unaffected.
+  receive new connections. Existing connections should be unaffected.
 
 **Design Decisions:**
 - **Bulkheads between each connection**: Every connection should not share state
-  with any other. I.e. it should get its own everything (Nonces, TLS Key Pairs,
+  with any other. I.e. it should get its own everything (key material, nonces,
   etc). The goal being to ensure that the compromise of one connection should
   not affect either the integrity or confidentiality of any other.
-- **Ephemeral certificates**: Never-reused certificates aim to reduce the risk
-  of compromised keys. The value of a particular connections' credentials should
-  be low.
+- **Simple and Misuse Resistant**: The audience for this library is general
+  software engineers. The bar for using roast correctly must be "knowing who I'm
+  supposed to be talking to". There cannot be multiple choices, or requiring
+  detailed knowledge of how to configure TLS.
 - **Modern TLS**: After the Roast Handshake, all communications use the latest
   available TLS (1.3 as of writing)
 
