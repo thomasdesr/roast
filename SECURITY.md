@@ -5,24 +5,25 @@
 > [!WARNING]
 > Roast is experimental security code that has not undergone significant security review by lots of people. Do not use in production systems.
 
-This document describes Roast's security properties and requirements. For technical protocol details, see [How it Works](./docs/protocol.md).
+This document describes Roast's security properties and requirements. For more
+technical protocol details, see [docs/protocol.md](./docs/protocol.md).
 
 ## Authentication Process
 
-1. **Exchange of signed GetCallerIdentity payloads:**
-   - Verifies the identity of both client and server using their AWS Identity
-   - Ensures that only authorized IAM roles can establish connections
+1. **Roast Handshake: Exchange of signed GetCallerIdentity payloads:**
+- Verifies the identity of both client and server using their AWS Identity
+- Exchanges ephemeral connection information (CA public keys)
+- Ensures that only authorized IAM roles can establish connections
 
-2. **TLS with ephemeral certificates:**
-   - As a part of identity verification, each side of the roast handshake
-     generates a per-connection certificates locally
-   - These certificates use Go's standard library TLS implementation
+2. **TLS:**
+- Normal Go `crypto/tls` mTLS using the exchanged information from the handshake
+
 
 ## Security Considerations
 
 **Assumptions:**
-- The security of new Roast connections is fundamentally limited by the security of
-  your AWS credential management. If a malicious party can access IAM
+- The security of new Roast connections is fundamentally limited by the security
+  of your AWS credential management. If a malicious party can access IAM
   Credentials for a role in the allowed list, they will be able to initiate or
   receive new connections. Existing connections should be unaffected.
 
