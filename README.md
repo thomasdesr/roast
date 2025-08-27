@@ -1,24 +1,30 @@
-# Roast: mTLS on AWS without the hassle
+# Roast: Simplified mTLS for AWS
 
 > [!WARNING]
 > Roast is still under fairly active development. Please don't use it, but if this this sounds interesting to you feel free, to reach out :D
 
 ## Overview
 
-Roast (`[Ro]le[A]WS[S]ignature[T]LS`) is a Go library that simplifies using mutual TLS (mTLS) authentication for services with access to AWS credentials by leveraging your existing AWS Identities to authenticate clients & servers instead of traditional certificate authorities (CAs).
+Roast (`[Ro]le[A]WS[S]ignature[T]LS`) is a Go library that simplifies mutual TLS (mTLS) authentication by leveraging your existing AWS IAM identities instead of traditional Certificate Authorities (CAs). It provides drop-in replacements for standard Go networking primitives.
 
-Roast wants to give you a simple but durable story for programatic service authentication (AuthN), authorization (authZ), and confidentiality.
+Roast aims to give you a simpler approach to programmatic service authentication (AuthN), authorization (AuthZ), and confidentiality by building on infrastructure you likely already have.
 
 ## Why?
 
-Setting up and managing certificate authorities (CAs) for mTLS is often frustrating complex, time-consuming and outage-prone. There are many tools actively working to make it easier and safer to operate a CAs (and they're great! TKTK: link to SmallStep & friends). However its even easier not to have another service you need to run/use. Especially since the core value of a CA is to provide a robust identity system, and you already one (AWS IAM)! Roast aims to allow you to trivially add mTLS to to any existing connections you have between services.
+Traditional mTLS implementations often involve operational challenges:
 
-Letting you get this for "free":
+- **CA infrastructure complexity** - Setting up and managing certificate authorities can be complex and time-consuming
+- **Additional operational overhead** - Another service to run, monitor, and maintain  
+- **Parallel identity systems** - Managing certificates separately from your existing AWS IAM setup
+- **Key management** - Handling certificate rotation, revocation, and distribution
 
-- Leverage your existing AWS-based Identity system for inter-service AuthN & AuthZ.
-- Automatic key rotation and certificate management
-- No "operational" overhead
-- No need to manage a duplicate PKI infrastructure
+Roast takes a different approach by building on AWS's existing identity infrastructure. Since you're likely already using AWS IAM for identity management, why not use it for service-to-service authentication too?
+
+This approach aims to provide:
+- **Reduced operational overhead** - Fewer additional services to manage
+- **Automatic key rotation** - Fresh ephemeral certificates for each connection
+- **Familiar identity model** - Use your existing IAM roles for service authentication
+- **Simpler infrastructure** - Build on what you already have
 
 ## How to use
 
