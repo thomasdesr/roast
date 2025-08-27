@@ -82,7 +82,14 @@ func main() {
 	proxy := goproxy.NewProxyHttpServer()
 	proxy.Verbose = true
 
-	// For normal HTTP PROXY requests, use the RoundTripper
+	// Regardless of what the URL passed to us said, going forward it'll be over
+	// HTTPS (which is what roast is doing and also what `http2.Transport` requires`)
+	proxy.OnRequest().DoFunc(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
+		req.URL.Scheme = "https"
+		return req, nil
+	})
+
+	// For normal HTTP PROXY requests, use the roast-ified RoundTripper
 	proxy.OnRequest().DoFunc(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 		ctx.RoundTripper = goproxy.RoundTripperFunc(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Response, error) {
 			return tr.RoundTrip(req)
@@ -145,7 +152,6 @@ func handleRawRequests(proxy *goproxy.ProxyHttpServer) http.Handler {
 
 			// This is a normal HTTP request, not an HTTP_PROXY protocol
 			// request, fix it to be
-			r.URL.Scheme = "https"
 			r.URL.Host = r.Host
 		}
 
