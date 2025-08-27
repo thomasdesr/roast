@@ -60,19 +60,33 @@ sequenceDiagram
     autonumber
     participant C as Client
     participant S as Server
+    participant AWS as AWS STS
 
-    rect Blue
-        Note over C,S: Roast Handshake
-        C->>S: roast.ClientHello
-        S->>C: roast.ServerHello
+    Note over C,S: Roast Authentication Protocol
+
+    rect rgb(70, 130, 180)
+        C->>S: SigV4Sign(ClientHello, ClientIdentity)
+
+        Note over S: Verify Client with AWS STS
+        S->>AWS: SigV4Verify(ClientHello)
+        AWS-->>S: ClientIdentity
+        S->>S: Verify ClientIdentity is an allowed peer
+        
+        S->>C: SigV4Sign(ServerHello, ServerIdentity)
+
+        Note over C: Verify server with AWS STS
+        C->>AWS: SigV4Verify(ServerHello)
+        AWS-->>C: ServerIdentity
+        S->>S: Verify ServerIdentity is an allowed peer
     end
 
-    rect Purple
-        Note over C,S: TLS Handshake with<br/>ephemeral certificates
-        C->>S: tls.ClientHello
-        S->>C: tls.ServerHello
+    rect rgb(147, 112, 219)
+        Note over C,S:Normal mTLS with<br/>exchanged certs
     end
-    Note over C,S: Application Data<br/>over mTLS Channel
+    
+    rect rgb(60, 179, 113)
+        Note over C,S: Application data<br/>over authenticated mTLS
+    end
 ```
 
 ### Roast Handshake Detail
@@ -80,32 +94,47 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-
-    participant C as Client
+    participant C as Client  
     participant S as Server
     participant AWS as AWS STS
 
+    Note over C,S: Connection establishment
     C->>S: TCP Connect
-    S->>C: TCP Accept
 
-    C->>C: Generate ephemeral TLS Credentials
-    C->>S: Send SigV4(roast.ClientHello)
-    rect Blue
-        note over S: Verify roast.ClientHello
-        S->>AWS: GetCallerIdentity (from client)
-        AWS-->>S: Client identity
-        S->>S: Validate client role
+    rect rgb(70, 130, 180)
+        Note over C,S: Roast mutual authentication
+        
+        Note over C: Generate ephemeral CA
+        C->>C: Create ClientHello with public key
+        C->>S: SigV4Sign(ClientHello, ClientIdentity)
+        
+        rect rgb(205, 133, 63)
+            Note over S: Client verification
+            S->>AWS: SigV4Verify(ClientHello)
+            AWS-->>S: ClientIdentity
+            S->>S: Verify ClientIdentity is an allowed peer
+        end
+        
+        Note over S: Generate ephemeral CA
+        S->>S: Create ServerHello with public key
+        S->>C: SigV4Sign(ServerHello, ServerIdentity)
+        
+        rect rgb(147, 112, 219)
+            Note over C: Server verification
+            C->>AWS: SigV4Verify(ServerHello)
+            AWS-->>C: ServerIdentity
+            C->>C: Verify ServerIdentity is an allowed peer
+        end
     end
 
-    S->>S: Generate ephemeral TLS Credentials
-    S->>C: Send SigV4(roast.ServerHello)
-
-    rect Purple
-        note over C: Verify roast.ServerHello
-        C->>AWS: GetCallerIdentity (from server)
-        AWS-->>C: Server identity
-        C->>C: Validate server role
+    rect rgb(147, 112, 219)
+        Note over C,S: Establish secure channel
+        Note over C,S: Generate TLS certs and sign using our ephemeral CAs
+        C->>S: ClientHello (with cert)
+        S->>C: ServerHello (with cert)
+        C->>S: Key exchange & verify
+        Note over C,S: mTLS handshake complete
     end
 
-    Note over C, S: Next: Start TLS
+    Note over C,S: Secure application data<br/>over authenticated channel
 ```
