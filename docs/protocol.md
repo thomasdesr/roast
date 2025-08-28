@@ -83,7 +83,7 @@ sequenceDiagram
     Note over C,S: Application data<br/>over authenticated mTLS
 ```
 
-### Roast Handshake Detail
+### Roast Handshake in detail
 
 This diagram provides a step-by-step walkthrough of the Roast handshake.
 
