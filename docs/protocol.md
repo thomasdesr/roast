@@ -66,9 +66,9 @@ sequenceDiagram
     participant C as Client
     participant S as Server
 
-    Note over C,S: Roast Authentication Protocol
-
     rect rgb(70, 130, 180)
+        Note over C,S: Roast Authentication Protocol
+        
         C->>S: ClientHello
 
         Note over S: Verify ClientHello with AWS STS
@@ -78,9 +78,7 @@ sequenceDiagram
         Note over C: Verify ServerHello with AWS STS
     end
 
-    rect rgb(147, 112, 219)
-        Note over C,S: Normal mTLS with<br/>exchanged certs
-    end
+    Note over C,S: Normal mTLS with<br/>exchanged certs
     
     Note over C,S: Application data<br/>over authenticated mTLS
 ```
@@ -98,35 +96,38 @@ sequenceDiagram
     C<<->>S: TCP Connection Establishment
 
     rect rgb(70, 130, 180)
-        Note over C,S: Roast mutual authentication
+        Note left of C: Roast mutual authentication
         
-        Note over C: Generate ephemeral CA
-        C->>C: Create ClientHello with public key
-        C->>S: SigV4Sign(ClientHello, ClientIdentity)
+        C->>C: Generate an ephemeral CA
+        C->>C: SigV4Sign(ClientHello, ClientIdentity)
+        C->>S: SignedClientHello
         
         rect rgb(205, 133, 63)
-            Note over S: ClientHello verification
-            S->>AWS: SigV4Verify(ClientHello)
+            Note left of S: ClientHello verification
+            S->>AWS: SigV4Verify(SignedClientHello)
             AWS-->>S: ClientIdentity
             S->>S: Verify ClientIdentity is an allowed peer
         end
         
-        Note over S: Generate ephemeral CA
-        S->>S: Create ServerHello with public key
-        S->>C: SigV4Sign(ServerHello, ServerIdentity)
+        S->>S: Generate an ephemeral CA
+        S->>S: SigV4Sign(ServerHello, ServerIdentity)
+        S->>C: SignedServerHello
         
         rect rgb(60, 179, 113)
-            Note over C: ServerHello verification
-            C->>AWS: SigV4Verify(ServerHello)
+            Note left of C: ServerHello verification
+            C->>AWS: SigV4Verify(SignedServerHello)
             AWS-->>C: ServerIdentity
             C->>C: Verify ServerIdentity is an allowed peer
         end
     end
 
     rect rgb(147, 112, 219)
-        Note over C,S: Generate TLS certs and sign using our ephemeral CAs
-        C->>S: ClientHello
-        S->>C: ServerHello
+        par Generate certs
+            C->>C: Generate TLS Cert signed by local CA
+            S->>S: Generate TLS Cert signed by local CA
+        end
+        C->>S: TLS ClientHello
+        S->>C: TLS ServerHello
     end
 
     Note over C,S: Application data<br/>over authenticated mTLS
