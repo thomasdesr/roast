@@ -58,7 +58,8 @@ solved by using AWS's identity system.
 
 ### Full Setup Sequence
 
-This is a high level diagram showing a simplified version of the Roast connection setup sequence.
+This is a high level diagram showing a summarized description of the Roast
+connection setup sequence.
 
 ```mermaid
 sequenceDiagram
@@ -104,7 +105,7 @@ sequenceDiagram
         C->>S: SigV4Sign(ClientHello, ClientIdentity)
         
         rect rgb(205, 133, 63)
-            Note over S: Client verification
+            Note over S: ClientHello verification
             S->>AWS: SigV4Verify(ClientHello)
             AWS-->>S: ClientIdentity
             S->>S: Verify ClientIdentity is an allowed peer
@@ -115,7 +116,7 @@ sequenceDiagram
         S->>C: SigV4Sign(ServerHello, ServerIdentity)
         
         rect rgb(60, 179, 113)
-            Note over C: Server verification
+            Note over C: ServerHello verification
             C->>AWS: SigV4Verify(ServerHello)
             AWS-->>C: ServerIdentity
             C->>C: Verify ServerIdentity is an allowed peer
