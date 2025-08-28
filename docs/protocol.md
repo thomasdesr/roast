@@ -87,9 +87,7 @@ sequenceDiagram
         Note over C,S:Normal mTLS with<br/>exchanged certs
     end
     
-    rect rgb(60, 179, 113)
-        Note over C,S: Application data<br/>over authenticated mTLS
-    end
+    Note over C,S: Application data<br/>over authenticated mTLS
 ```
 
 ### Roast Handshake Detail
@@ -122,7 +120,7 @@ sequenceDiagram
         S->>S: Create ServerHello with public key
         S->>C: SigV4Sign(ServerHello, ServerIdentity)
         
-        rect rgb(147, 112, 219)
+        rect rgb(60, 179, 113)
             Note over C: Server verification
             C->>AWS: SigV4Verify(ServerHello)
             AWS-->>C: ServerIdentity
@@ -131,13 +129,9 @@ sequenceDiagram
     end
 
     rect rgb(147, 112, 219)
-        Note over C,S: Establish secure channel
         Note over C,S: Generate TLS certs and sign using our ephemeral CAs
-        C->>S: ClientHello (with cert)
-        S->>C: ServerHello (with cert)
-        C->>S: Key exchange & verify
-        Note over C,S: mTLS handshake complete
+        C<<->>S: Establish mTLS Connection
     end
 
-    Note over C,S: Secure application data<br/>over authenticated channel
+    Note over C,S: Application data<br/>over a TLS channel
 ```
