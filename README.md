@@ -4,9 +4,10 @@
 existing AWS IAM identities rather than requiring a separate Certificate
 Authority.**
 
-> [!WARNING] Roast is experimental security code that has not undergone
-> significant security review by lots of people. Do not use in production
-> systems. That said, if this approach interests you, would love to chat :D
+> [!WARNING]
+> Roast is experimental security code that has not undergone significant
+> security review by lots of people. Do not use in production systems.
+> That said, if this approach interests you, would love to chat :D
 
 ## Motivation
 
@@ -27,21 +28,23 @@ Roast takes a different approach by building on AWS's existing identity
 infrastructure. If you're already using AWS IAM for identity management, then
 Roast makes it easy to leverage the same system for authentication.
 
-This approach can provide:
+### Key Benefits
+
 - **Familiar identity model** - Use your existing IAM roles for service
   authentication
 - **Simpler infrastructure** - Build on what you already have
 - **Reduced operational overhead** - Fewer additional services to manage
 - **Automatic key rotation** - Fresh ephemeral certificates for each connection
 
-**How it works:** Roast uses AWS SigV4 signatures combined with
-`sts.GetCallerIdentity` to create verifiable identity proofs, turning your
-existing AWS credentials into a signing mechanism to bootstrap secure
-connections.
+### How It Works
+
+Roast uses AWS SigV4 signatures combined with `sts.GetCallerIdentity` to create
+verifiable identity proofs, turning your existing AWS credentials into a signing
+mechanism to bootstrap secure connections.
 
 ## Quick Start
 
-### For HTTP
+### HTTP Services
 
 For HTTP services, use the `rhttp2` package:
 
@@ -64,9 +67,9 @@ client, err := rhttp2.Client([]arn.ARN{serverRole})
 resp, err := client.Get("https://server-address")
 ```
 
-### Raw TCP
+### TCP Connections
 
-For lower-level TCP connections handling:
+For lower-level TCP connection handling:
 
 ```go
 // Client
@@ -83,7 +86,7 @@ listener, err := roast.NewListener(rawListener, []arn.ARN{clientRole})
 
 ## Learn More
 
-- **[How it Works](./docs/protocol.md)** - Technical details and protocol flow
+- **[docs/protocol.md](./docs/protocol.md)** - Technical details on the protocol flow
 - **[Security Considerations](./SECURITY.md)** - Security model and limitations
 - **[API Reference](https://pkg.go.dev/github.com/thomasdesr/roast)** - Complete
   Go package documentation

@@ -33,7 +33,7 @@ technical protocol details, see [docs/protocol.md](./docs/protocol.md).
   etc). The goal being to ensure that the compromise of one connection should
   not affect either the integrity or confidentiality of any other.
 - **Simple and Misuse Resistant**: The audience for this library is general
-  software engineers. The bar for using roast correctly must be "knowing who I'm
+  software engineers. The bar for using Roast correctly must be "knowing who I'm
   supposed to be talking to". There cannot be multiple choices, or requiring
   detailed knowledge of how to configure TLS.
 - **Modern TLS**: After the Roast Handshake, all communications use the latest
@@ -41,7 +41,7 @@ technical protocol details, see [docs/protocol.md](./docs/protocol.md).
 
 ## Known Security Pitfalls
 
-Areas the author was aware of during development:
+Areas we were aware of during development:
 
 - HashiCorp Vault + k8s-aws-authenticator GetCallerIdentity failures
 - Replay attack considerations

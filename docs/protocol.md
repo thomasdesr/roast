@@ -1,6 +1,9 @@
 # How Roast Works
 
+> [!NOTE]
 > This section assumes some familiarity with AWS IAM roles but not intimate knowledge of AWS internals.
+
+For a quick overview and getting started, see the [README](../README.md). For security considerations and limitations, see [SECURITY.md](../SECURITY.md).
 
 ## Protocol Overview
 
