@@ -40,7 +40,7 @@ Roast makes it easy to leverage the same system for authentication.
 
 Roast uses AWS SigV4 signatures combined with `sts.GetCallerIdentity` to create
 verifiable identity proofs, turning your existing AWS credentials into a signing
-mechanism to bootstrap secure connections.
+mechanism to bootstrap TLS connections.
 
 ## Quick Start
 

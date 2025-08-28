@@ -1,6 +1,7 @@
 # Security Model
 
-**If you have identified a security issue with Roast, please reach out via: https://github.com/thomasdesr/roast/security.**
+> [!IMPORTANT]
+> If you have identified a security issue with Roast, please reach out via: https://github.com/thomasdesr/roast/security.
 
 > [!WARNING]
 > Roast is experimental security code that has not undergone significant security review by lots of people. Do not use in production systems.
