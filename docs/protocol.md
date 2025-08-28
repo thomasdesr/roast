@@ -58,28 +58,23 @@ solved by using AWS's identity system.
 
 ### Full Setup Sequence
 
+This is a high level diagram showing a simplified version of the Roast connection setup sequence.
+
 ```mermaid
 sequenceDiagram
     participant C as Client
     participant S as Server
-    participant AWS as AWS STS
 
     Note over C,S: Roast Authentication Protocol
 
     rect rgb(70, 130, 180)
-        C->>S: SigV4Sign(ClientHello, ClientIdentity)
+        C->>S: ClientHello
 
-        Note over S: Verify Client with AWS STS
-        S->>AWS: SigV4Verify(ClientHello)
-        AWS-->>S: ClientIdentity
-        S->>S: Verify ClientIdentity is an allowed peer
+        Note over S: Verify ClientHello with AWS STS
         
-        S->>C: SigV4Sign(ServerHello, ServerIdentity)
+        S->>C: ServerHello
 
-        Note over C: Verify server with AWS STS
-        C->>AWS: SigV4Verify(ServerHello)
-        AWS-->>C: ServerIdentity
-        S->>S: Verify ServerIdentity is an allowed peer
+        Note over C: Verify ServerHello with AWS STS
     end
 
     rect rgb(147, 112, 219)
@@ -90,6 +85,8 @@ sequenceDiagram
 ```
 
 ### Roast Handshake Detail
+
+This diagram provides a step-by-step walkthrough of the Roast handshake.
 
 ```mermaid
 sequenceDiagram
