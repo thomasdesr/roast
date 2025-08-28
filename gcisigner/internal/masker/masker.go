@@ -1,5 +1,5 @@
 // Masker exists to provide a simple way to obfuscate data in a way that will
-// make it much harder for someone using the gcisigner to accidentially bypass
+// make it much harder for someone using the gcisigner to accidentally bypass
 // the SigV4 signed message verification.
 package masker
 

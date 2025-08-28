@@ -114,7 +114,7 @@ func setRoastHTTPPeerMetadataHeaders(r *http.Request, peerMetadata *roast.PeerMe
 	if err != nil {
 		// We use Panic here because if we can't marshal our own data, something
 		// is very wrong, and because this will be being called by the Rewrite
-		// function of the httputil.ReverseProxy, which doens't have a good way
+		// function of the httputil.ReverseProxy, which doesn't have a good way
 		// to report errors
 		panic(err)
 	}

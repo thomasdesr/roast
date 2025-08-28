@@ -1,9 +1,11 @@
 # How Roast Works
 
 > [!NOTE]
-> This section assumes some familiarity with AWS IAM roles but not intimate knowledge of AWS internals.
+> This section assumes some familiarity with AWS IAM roles but not intimate
+> knowledge of AWS internals.
 
-For a quick overview and getting started, see the [README](../README.md). For security considerations and limitations, see [SECURITY.md](../SECURITY.md).
+For a quick overview and getting started, see the [README](../README.md). For
+security considerations and limitations, see [SECURITY.md](../SECURITY.md).
 
 ## Protocol Overview
 
@@ -11,7 +13,8 @@ For a quick overview and getting started, see the [README](../README.md). For se
 
 1. Using SigV4 signed `sts.GetCallerIdentity` requests to provide a proof of
    identity with an attached ephemeral CA public key
-2. Generate ephemeral client & server TLS certificates and use them to establish an mTLS verified connection
+2. Generate ephemeral client & server TLS certificates and use them to establish
+   an mTLS verified connection
 
 ## High-Level Walkthrough
 
@@ -68,18 +71,18 @@ sequenceDiagram
 
     rect rgb(70, 130, 180)
         Note over C,S: Roast Authentication Protocol
-        
+
         C->>S: ClientHello
 
         Note over S: Verify ClientHello with AWS STS
-        
+
         S->>C: ServerHello
 
         Note over C: Verify ServerHello with AWS STS
     end
 
     Note over C,S: Normal mTLS with<br/>exchanged certs
-    
+
     Note over C,S: Application data<br/>over authenticated mTLS
 ```
 
@@ -89,7 +92,7 @@ This diagram provides a step-by-step walkthrough of the Roast handshake.
 
 ```mermaid
 sequenceDiagram
-    participant C as Client  
+    participant C as Client
     participant S as Server
     participant AWS as AWS STS
 
@@ -97,22 +100,22 @@ sequenceDiagram
 
     rect rgb(70, 130, 180)
         Note left of C: Roast mutual authentication
-        
+
         C->>C: Generate an ephemeral CA
         C->>C: SigV4Sign(ClientHello, ClientIdentity)
         C->>S: SignedClientHello
-        
+
         rect rgb(205, 133, 63)
             Note left of S: ClientHello verification
             S->>AWS: SigV4Verify(SignedClientHello)
             AWS-->>S: ClientIdentity
             S->>S: Verify ClientIdentity is an allowed peer
         end
-        
+
         S->>S: Generate an ephemeral CA
         S->>S: SigV4Sign(ServerHello, ServerIdentity)
         S->>C: SignedServerHello
-        
+
         rect rgb(60, 179, 113)
             Note left of C: ServerHello verification
             C->>AWS: SigV4Verify(SignedServerHello)

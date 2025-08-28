@@ -76,7 +76,7 @@ func runRoundTrip(ctx context.Context, t *testing.T, listener net.Listener, dial
 		defer c.Close()
 		// defer context.AfterFunc(ctx, func() { t.Log("Context canceled, closing server side of the connection", c.Close()) })
 
-		// Server copies any data it recieves back to the client
+		// Server copies any data it receives back to the client
 		t.Log("Server side: copying data")
 		if _, err := io.Copy(c, c); err != nil && err != io.EOF {
 			return errorutil.Wrap(err, "copy failed")

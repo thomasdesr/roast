@@ -38,7 +38,7 @@ var _ Signer = &SigV4Signer{}
 
 func NewSigner(regionName string, creds aws.CredentialsProvider) (*SigV4Signer, error) {
 	region := awsapi.Region(regionName)
-	if !region.IsValid() { // Ensure we get handed a vaild region
+	if !region.IsValid() { // Ensure we get handed a valid region
 		return nil, fmt.Errorf("invalid region: %q", regionName)
 	}
 

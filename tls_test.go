@@ -60,8 +60,8 @@ func TestEnsureNoClearTextOnTheWire(t *testing.T) {
 	leftTestConn := left.(*testutils.RecordingConn)
 	rightTestConn := right.(*testutils.RecordingConn)
 
-	// Note: This will actually duplicate all the data twice sicne its on both
-	// the Send and recieve sides, but that's fine.
+	// Note: This will actually duplicate all the data twice since its on both
+	// the send and receive sides, but that's fine.
 	allDataOnTheWire := slices.Concat(
 		leftTestConn.DataRecv,
 		leftTestConn.DataSent,

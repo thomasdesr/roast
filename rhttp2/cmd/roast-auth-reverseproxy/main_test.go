@@ -181,7 +181,7 @@ func newTestServer(t *testing.T, createListener func() (net.Listener, *url.URL))
 			return
 		}
 
-		t.Log("request from peer recieved", peer.Role)
+		t.Log("request from peer received", peer.Role)
 		fmt.Fprintf(w, "peer: %+v", peer)
 	})
 

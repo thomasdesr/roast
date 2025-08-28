@@ -77,7 +77,7 @@ serverRole, _ := arn.Parse("arn:aws:iam::123456789012:role/MyServer")
 conn, err := roast.NewDialer([]arn.ARN{serverRole}).DialContext("tcp", serverAddr)
 ```
 
-```
+```go
 // Server
 clientRole, _ := arn.Parse("arn:aws:iam::123456789012:role/MyClient")
 listener, err := roast.NewListener(rawListener, []arn.ARN{clientRole})
@@ -86,7 +86,8 @@ listener, err := roast.NewListener(rawListener, []arn.ARN{clientRole})
 
 ## Learn More
 
-- **[docs/protocol.md](./docs/protocol.md)** - Technical details on the protocol flow
+- **[docs/protocol.md](./docs/protocol.md)** - Technical details on the protocol
+  flow
 - **[Security Considerations](./SECURITY.md)** - Security model and limitations
 - **[API Reference](https://pkg.go.dev/github.com/thomasdesr/roast)** - Complete
   Go package documentation
