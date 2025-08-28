@@ -60,7 +60,6 @@ solved by using AWS's identity system.
 
 ```mermaid
 sequenceDiagram
-    autonumber
     participant C as Client
     participant S as Server
     participant AWS as AWS STS
@@ -84,7 +83,7 @@ sequenceDiagram
     end
 
     rect rgb(147, 112, 219)
-        Note over C,S:Normal mTLS with<br/>exchanged certs
+        Note over C,S: Normal mTLS with<br/>exchanged certs
     end
     
     Note over C,S: Application data<br/>over authenticated mTLS
@@ -94,7 +93,6 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    autonumber
     participant C as Client  
     participant S as Server
     participant AWS as AWS STS
@@ -130,8 +128,9 @@ sequenceDiagram
 
     rect rgb(147, 112, 219)
         Note over C,S: Generate TLS certs and sign using our ephemeral CAs
-        C<<->>S: Establish mTLS Connection
+        C->>S: ClientHello
+        S->>C: ServerHello
     end
 
-    Note over C,S: Application data<br/>over a TLS channel
+    Note over C,S: Application data<br/>over authenticated mTLS
 ```
