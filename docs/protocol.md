@@ -97,8 +97,7 @@ sequenceDiagram
     participant S as Server
     participant AWS as AWS STS
 
-    Note over C,S: Connection establishment
-    C->>S: TCP Connect
+    C<<->>S: TCP Connection Establishment
 
     rect rgb(70, 130, 180)
         Note over C,S: Roast mutual authentication
